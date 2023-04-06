@@ -56,7 +56,6 @@ photonManager.setOnJoinedRoom(() => {
     if ( actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
       console.log("creating other player");
       const otherPlayer = new Player(scene, actor, false,);
-      
       console.log("other player created"+ actor);
       players.set(actor.toString(), otherPlayer);
     }

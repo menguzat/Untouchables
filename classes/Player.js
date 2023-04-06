@@ -74,7 +74,7 @@ export class Player {
     var geometry = new Ammo.btBoxShape(new Ammo.btVector3(chassisWidth * .5, chassisHeight * .5, chassisLength * .5));
     var transform = new Ammo.btTransform();
     transform.setIdentity();
-    transform.setOrigin(new Ammo.btVector3(0, 5, 0));
+    transform.setOrigin(new Ammo.btVector3(this.position.x, this.position.y, this.position.x));
     transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
     var motionState = new Ammo.btDefaultMotionState(transform);
     var localInertia = new Ammo.btVector3(0, 0, 0);
@@ -88,7 +88,8 @@ export class Player {
     transform2.setOrigin(massOffset);
     var compound = new Ammo.btCompoundShape();
     compound.addChildShape(transform2, geometry);
-
+    compound.position= this.position;
+    console.log("compound created at "+this.position);
     var body = new Ammo.btRigidBody(new Ammo.btRigidBodyConstructionInfo(massVehicle, motionState, compound, localInertia));
     body.setActivationState(4);
 
@@ -223,7 +224,7 @@ export class Player {
 
       });
     
-    return trans;
+    return compound;
   }
 
 
