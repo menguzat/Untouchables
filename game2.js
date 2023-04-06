@@ -54,6 +54,7 @@ photonManager.setOnJoinedRoom(() => {
     console.log(actor);
     console.log(actor + " " + photonManager.photon.myActor().actorNr);
     if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
+      console.log("pos-"+actor.toString());
       const customProperties = photonManager.photon.myRoom().getCustomProperty("pos-"+actor.toString());
       console.log( customProperties );
       const otherPlayerPosition = customProperties[actor.toString()] || new BABYLON.Vector3(0, 0, 0);
@@ -99,6 +100,8 @@ engine.runRenderLoop(() => {
     const position = localPlayer.mesh.position;
 
     const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: localPlayer.position };
+    photonManager.photon.myRoom().setCustomProperty("pos-"+photonManager.photon.myActor().actorNr.toString(), position);
+
     photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
@@ -130,7 +133,6 @@ photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
     // } 
    
   //  console.log(customProperties[id.toString()]);
-    photonManager.photon.myRoom().setCustomProperty("pos-"+id.toString(), position);
     players.get(id.toString()).actions = actions;
   }
 });
