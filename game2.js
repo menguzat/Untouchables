@@ -55,9 +55,8 @@ photonManager.setOnJoinedRoom(() => {
     console.log(actor + " " + photonManager.photon.myActor().actorNr);
     if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
       console.log("pos-"+actor.toString());
-      const customProperties = photonManager.photon.myRoom().getCustomProperty("pos-"+actor.toString());
-      console.log( customProperties );
-      const otherPlayerPosition = customProperties[actor.toString()] || new BABYLON.Vector3(0, 0, 0);
+      const otherPlayerPosition = photonManager.photon.myRoom().getCustomProperty("pos-"+actor.toString());
+    
       console.log(otherPlayerPosition);
       
       // Create the other player using their last known position
