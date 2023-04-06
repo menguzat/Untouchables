@@ -36,7 +36,7 @@ const players = new Map();
 const photonManager = new PhotonManager();
 photonManager.setOnJoinedRoom(() => {
   // Add the local player
-  localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(0, 0, 5));
+  localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(0, 0, 0));
   players.set(photonManager.photon.myActor().actorNr.toString(), localPlayer);
 
   const otherActors = photonManager.photon.myRoomActors();
@@ -114,14 +114,14 @@ photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
     
   } else {
     //console.log(position);
-    const otherPlayer=players.get(id.toString());
-    if (otherPlayer.positionUpdated!=true)
-    {
-      console.log("updating pos "+id.toString() + " " + position);
-      players.get(id.toString()).mesh.position=position;
-    otherPlayer.positionUpdated = true;
-      console.log(id.toString()+" "+otherPlayer.positionUpdated );
-    } 
+    // const otherPlayer=players.get(id.toString());
+    // if (otherPlayer.positionUpdated!=true)
+    // {
+    //   console.log("updating pos "+id.toString() + " " + position);
+    //   players.get(id.toString()).mesh.position=position;
+    // otherPlayer.positionUpdated = true;
+    //   console.log(id.toString()+" "+otherPlayer.positionUpdated );
+    // } 
     players.get(id.toString()).actions = actions;
   }
 });
