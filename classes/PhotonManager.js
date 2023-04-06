@@ -12,6 +12,8 @@ export class PhotonManager {
         this.photon.onActorJoin = this.onActorJoin.bind(this);
         this.photon.onActorLeave = this.onActorLeave.bind(this);
         this.photon.onRoomList = this.onRoomList.bind(this);
+        this.playerPositions = new Map(); // Add this line
+
     }
 
     connect() {
