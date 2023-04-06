@@ -9,9 +9,9 @@ const scene = new BABYLON.Scene(engine);
 
 await Ammo();
 
-scene.enablePhysics(new BABYLON.Vector3(0,-10,0), new BABYLON.AmmoJSPlugin());
+scene.enablePhysics(new BABYLON.Vector3(0, -10, 0), new BABYLON.AmmoJSPlugin());
 
-let localPlayer=null;
+let localPlayer = null;
 // Set up the camera and lighting
 // Set the background color
 scene.clearColor = new BABYLON.Color3(0.8, 0.8, 0.8);
@@ -35,66 +35,68 @@ const players = new Map();
 
 const photonManager = new PhotonManager();
 photonManager.setOnJoinedRoom(() => {
-    // Add the local player
-    localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(0, 0, 5));
-    players.set(photonManager.photon.myActor().actorNr.toString(), localPlayer);
+  // Add the local player
+  localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(0, 0, 5));
+  players.set(photonManager.photon.myActor().actorNr.toString(), localPlayer);
 
-    const otherActors = photonManager.photon.myRoomActors();
-    console.log(otherActors);
+  const otherActors = photonManager.photon.myRoomActors();
+  console.log(otherActors);
 
-    window.addEventListener('keydown', keydown);
-    window.addEventListener('keyup', keyup);
+  window.addEventListener('keydown', keydown);
+  window.addEventListener('keyup', keyup);
 
-    console.log("my actor nr "+photonManager.photon.myActor().actorNr);
-  for(var i=1; i<=otherActors.length; i++) {
+  console.log("my actor nr " + photonManager.photon.myActor().actorNr);
+  for (var i = 1; i <= otherActors.length; i++) {
     console.log(otherActors[i].actorNr);
   }
 
   for (var actor in otherActors) {
     console.log(actor);
-    console.log(actor + " "+photonManager.photon.myActor().actorNr);
-    if ( actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
+    console.log(actor + " " + photonManager.photon.myActor().actorNr);
+    if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
       console.log("creating other player");
       const otherPlayer = new Player(scene, actor, false,);
-      console.log("other player created"+ actor);
+      console.log(otherPlayer);
       players.set(actor.toString(), otherPlayer);
+
+
     }
   }
-  });
+});
 
-  photonManager.setOnActorJoin((actor) => {
-    console.log("actor joined "+ photonManager.photon.myActor().actorNr+" "+actor.actorNr);
-    if(photonManager.photon.myActor().actorNr === actor.actorNr) {
-      return;
-    }
-    const newPlayer = new Player(scene, actor.actorNr, false);
-    players.set(actor.actorNr.toString(), newPlayer);
-    console.log("new player joined" +actor);
-  });
-  
-  photonManager.setOnActorLeave((actor) => {
-    const playerToRemove = players.get(actor.actorNr.toString());
-    console.log(actor)
-    console.log(playerToRemove)
-    if (playerToRemove) {
-      playerToRemove.destroy();
-      players.delete(actor);
-    }
-  });
-  photonManager.connect();
+photonManager.setOnActorJoin((actor) => {
+  console.log("actor joined " + photonManager.photon.myActor().actorNr + " " + actor.actorNr);
+  if (photonManager.photon.myActor().actorNr === actor.actorNr) {
+    return;
+  }
+  const newPlayer = new Player(scene, actor.actorNr, false);
+  players.set(actor.actorNr.toString(), newPlayer);
+  console.log("new player joined" + actor);
+});
+
+photonManager.setOnActorLeave((actor) => {
+  const playerToRemove = players.get(actor.actorNr.toString());
+  console.log(actor)
+  console.log(playerToRemove)
+  if (playerToRemove) {
+    playerToRemove.destroy();
+    players.delete(actor);
+  }
+});
+photonManager.connect();
 
 //players.set('local', localPlayer);
 
 // Set up the main game loop
 engine.runRenderLoop(() => {
-    if(localPlayer!=null) {
+  if (localPlayer != null) {
 
-        const position = localPlayer.mesh.position;
+    const position = localPlayer.mesh.position;
 
-        const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: localPlayer.position};
-        photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
-      }
-      
+    const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: localPlayer.position };
+    photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
+  }
+
   scene.render();
 });
 
@@ -103,17 +105,24 @@ window.addEventListener('resize', () => {
   engine.resize();
 });
 
-photonManager.setOnPlayerPositionUpdate((id,actions,position) => {
+photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
 
-    if (!players.has(id.toString())) {
-      const newPlayer = new Player(scene, id, false, position);
-      players.set(id, newPlayer);
-    } else {
-      //console.log(position);
-      console.log(players.get(id.toString()));
-      players.get(id.toString()).mesh.setOrigin(new Ammo.btVector3(position.x, position.y, position.z));
-      players.get(id.toString()).actions=actions;
-    }
+  if (!players.has(id.toString())) {
+    const newPlayer = new Player(scene, id, false, position);
+    players.set(id, newPlayer);
+    
+  } else {
+    //console.log(position);
+    const otherPlayer=players.get(id.toString());
+    if (otherPlayer.positionUpdated==false);
+    {
+      console.log("updating pos "+id.toString());
+    //  players.get(id.toString()).mesh.setOrigin(position);
+    otherPlayer.positionUpdated = true;
+      console.log(id.toString()+" "+otherPlayer.positionUpdated );
+    } 
+    players.get(id.toString()).actions = actions;
+  }
 });
 
 var keysActions = {
@@ -125,20 +134,20 @@ var keysActions = {
 
 function keyup(e) {
   if (keysActions[e.code]) {
-      localPlayer.actions[keysActions[e.code]] = false;
-      //e.preventDefault();
-      //e.stopPropagation();
+    localPlayer.actions[keysActions[e.code]] = false;
+    //e.preventDefault();
+    //e.stopPropagation();
 
-      //return false;
+    //return false;
   }
 }
 
 function keydown(e) {
   if (keysActions[e.code]) {
-      localPlayer.actions[keysActions[e.code]] = true;
-      //e.preventDefault();
-      //e.stopPropagation();
+    localPlayer.actions[keysActions[e.code]] = true;
+    //e.preventDefault();
+    //e.stopPropagation();
 
-      //return false;
+    //return false;
   }
 }

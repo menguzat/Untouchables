@@ -9,12 +9,14 @@ export class Player {
     this.ZERO_QUATERNION = new BABYLON.Quaternion();
     this.actions = { acceleration: false, braking: false, right: false, left: false };
     this.mesh = null;
+    this.positionUpdated=false;
     this.init();
   }
 
   init() {
     this.mesh = this.createVehicle(this.position, this.ZERO_QUATERNION);
     this.mesh.position = this.position;
+    this.positionUpdated=false;
     console.log("player " + this.id + " created");
     if (this.isLocal) {
       this.setupControls();
