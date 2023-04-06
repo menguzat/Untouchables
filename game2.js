@@ -128,9 +128,9 @@ photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
     //   console.log(id.toString()+" "+otherPlayer.positionUpdated );
     // } 
     console.log( "a"+photonManager.photon.myRoom().customProperties);
-    const customProperties = photonManager.photon.myRoom().customProperties;
+    const customProperties = photonManager.photon.myRoom().getCustomProperties();
     customProperties[id.toString()] = position;
-    photonManager.photon.setMyRoomCustomProperty(id.toString(), position);
+    photonManager.photon.setCustomProperty(id.toString(), position);
     players.get(id.toString()).actions = actions;
   }
 });
