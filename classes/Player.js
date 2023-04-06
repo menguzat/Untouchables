@@ -19,10 +19,47 @@ export class Player {
     if (this.isLocal) {
       this.setupControls();
     }
+    this.mesh.setOr
     return this.mesh;
   }
 
   createVehicle(pos, quat) {
+
+    function addWheel(isFront, pos, radius, width, index) {
+
+      var wheelInfo = vehicle.addWheel(
+        pos,
+        wheelDirectionCS0,
+        wheelAxleCS,
+        suspensionRestLength,
+        radius,
+        tuning,
+        isFront);
+
+      wheelInfo.set_m_suspensionStiffness(suspensionStiffness);
+      wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
+      wheelInfo.set_m_wheelsDampingCompression(suspensionCompression);
+      wheelInfo.set_m_maxSuspensionForce(600000);
+      wheelInfo.set_m_frictionSlip(40);
+      wheelInfo.set_m_rollInfluence(rollInfluence);
+
+      wheelMeshes[index] = createWheelMesh(radius, width);
+    }
+
+    function createWheelMesh(radius, width) {
+      //var mesh = new BABYLON.MeshBuilder.CreateBox("wheel", {width:.82, height:.82, depth:.82});
+      var mesh = new BABYLON.MeshBuilder.CreateCylinder("Wheel", { diameter: 1, height: 0.5, tessellation: 6 });
+      mesh.rotationQuaternion = new BABYLON.Quaternion();
+      console.log("wheel mesh created");
+      return mesh;
+    }
+
+    function createChassisMesh(w, l, h) {
+      var mesh = new BABYLON.MeshBuilder.CreateBox("box", { width: w, depth: h, height: l });
+      mesh.rotationQuaternion = new BABYLON.Quaternion();
+      console.log("chassis mesh created");
+      return mesh;
+    }
     var vehicle, chassisMesh;
     var wheelMeshes = [];
 
@@ -88,8 +125,8 @@ export class Player {
     transform2.setOrigin(massOffset);
     var compound = new Ammo.btCompoundShape();
     compound.addChildShape(transform2, geometry);
-    compound.position= this.position;
-    console.log("compound created at "+this.position);
+    compound.position = this.position;
+    console.log("compound created at " + this.position);
     var body = new Ammo.btRigidBody(new Ammo.btRigidBodyConstructionInfo(massVehicle, motionState, compound, localInertia));
     body.setActivationState(4);
 
@@ -107,41 +144,6 @@ export class Player {
     var trans = vehicle.getChassisWorldTransform();
     trans.setOrigin(new Ammo.btVector3(this.position.x, this.position.y, this.position.z));
     //vehicle.setChassisWorldTransform(trans);
-    function addWheel(isFront, pos, radius, width, index) {
-
-      var wheelInfo = vehicle.addWheel(
-        pos,
-        wheelDirectionCS0,
-        wheelAxleCS,
-        suspensionRestLength,
-        radius,
-        tuning,
-        isFront);
-
-      wheelInfo.set_m_suspensionStiffness(suspensionStiffness);
-      wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
-      wheelInfo.set_m_wheelsDampingCompression(suspensionCompression);
-      wheelInfo.set_m_maxSuspensionForce(600000);
-      wheelInfo.set_m_frictionSlip(40);
-      wheelInfo.set_m_rollInfluence(rollInfluence);
-
-      wheelMeshes[index] = createWheelMesh(radius, width);
-    }
-
-    function createWheelMesh(radius, width) {
-      //var mesh = new BABYLON.MeshBuilder.CreateBox("wheel", {width:.82, height:.82, depth:.82});
-      var mesh = new BABYLON.MeshBuilder.CreateCylinder("Wheel", { diameter: 1, height: 0.5, tessellation: 6 });
-      mesh.rotationQuaternion = new BABYLON.Quaternion();
-      console.log("wheel mesh created");
-      return mesh;
-    }
-
-    function createChassisMesh(w, l, h) {
-      var mesh = new BABYLON.MeshBuilder.CreateBox("box", { width: w, depth: h, height: l });
-      mesh.rotationQuaternion = new BABYLON.Quaternion();
-      console.log("chassis mesh created");
-      return mesh;
-    }
 
     addWheel(true, new Ammo.btVector3(wheelHalfTrackFront, wheelAxisHeightFront, wheelAxisFrontPosition), wheelRadiusFront, wheelWidthFront, FRONT_LEFT);
     addWheel(true, new Ammo.btVector3(-wheelHalfTrackFront, wheelAxisHeightFront, wheelAxisFrontPosition), wheelRadiusFront, wheelWidthFront, FRONT_RIGHT);
@@ -149,81 +151,81 @@ export class Player {
     addWheel(false, new Ammo.btVector3(wheelHalfTrackBack, wheelAxisHeightBack, wheelAxisPositionBack), wheelRadiusBack, wheelWidthBack, BACK_RIGHT);
 
     vehicleReady = true;
-    
-      this.scene.registerBeforeRender(() => {
-        // var dt = this.engine.getDeltaTime().toFixed() / 1000;
 
-        if (vehicleReady) {
+    this.scene.registerBeforeRender(() => {
+      // var dt = this.engine.getDeltaTime().toFixed() / 1000;
 
-          var speed = vehicle.getCurrentSpeedKmHour();
-          var maxSteerVal = 0.2;
-          breakingForce = 0;
-          engineForce = 0;
+      if (vehicleReady) {
 
-          //      console.log("acc: " +this.actions.acceleration);
-          if (this.actions.acceleration) {
-            if (speed < -1) {
-              breakingForce = maxBreakingForce;
-            } else {
-              engineForce = maxEngineForce;
-            }
+        var speed = vehicle.getCurrentSpeedKmHour();
+        var maxSteerVal = 0.2;
+        breakingForce = 0;
+        engineForce = 0;
 
-          } else if (this.actions.braking) {
-            if (speed > 1) {
-              breakingForce = maxBreakingForce;
-            } else {
-              engineForce = -maxEngineForce;
-            }
-          }
-
-          if (this.actions.right) {
-            if (vehicleSteering < steeringClamp) {
-              vehicleSteering += steeringIncrement;
-            }
-
-          } else if (this.actions.left) {
-            if (vehicleSteering > -steeringClamp) {
-              vehicleSteering -= steeringIncrement;
-            }
-
+        //      console.log("acc: " +this.actions.acceleration);
+        if (this.actions.acceleration) {
+          if (speed < -1) {
+            breakingForce = maxBreakingForce;
           } else {
-            vehicleSteering = 0;
+            engineForce = maxEngineForce;
           }
 
-          vehicle.applyEngineForce(engineForce, FRONT_LEFT);
-          vehicle.applyEngineForce(engineForce, FRONT_RIGHT);
-
-          vehicle.setBrake(breakingForce / 2, FRONT_LEFT);
-          vehicle.setBrake(breakingForce / 2, FRONT_RIGHT);
-          vehicle.setBrake(breakingForce, BACK_LEFT);
-          vehicle.setBrake(breakingForce, BACK_RIGHT);
-
-          vehicle.setSteeringValue(vehicleSteering, FRONT_LEFT);
-          vehicle.setSteeringValue(vehicleSteering, FRONT_RIGHT);
-
-
-          var tm, p, q, i;
-          var n = vehicle.getNumWheels();
-          for (i = 0; i < n; i++) {
-            vehicle.updateWheelTransform(i, true);
-            tm = vehicle.getWheelTransformWS(i);
-            p = tm.getOrigin();
-            q = tm.getRotation();
-            wheelMeshes[i].position.set(p.x(), p.y(), p.z());
-            wheelMeshes[i].rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
-            wheelMeshes[i].rotate(BABYLON.Axis.Z, Math.PI / 2);
+        } else if (this.actions.braking) {
+          if (speed > 1) {
+            breakingForce = maxBreakingForce;
+          } else {
+            engineForce = -maxEngineForce;
           }
-
-          tm = vehicle.getChassisWorldTransform();
-          p = tm.getOrigin();
-          q = tm.getRotation();
-          chassisMesh.position.set(p.x(), p.y(), p.z());
-          chassisMesh.rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
-          chassisMesh.rotate(BABYLON.Axis.X, Math.PI);
         }
 
-      });
-    
+        if (this.actions.right) {
+          if (vehicleSteering < steeringClamp) {
+            vehicleSteering += steeringIncrement;
+          }
+
+        } else if (this.actions.left) {
+          if (vehicleSteering > -steeringClamp) {
+            vehicleSteering -= steeringIncrement;
+          }
+
+        } else {
+          vehicleSteering = 0;
+        }
+
+        vehicle.applyEngineForce(engineForce, FRONT_LEFT);
+        vehicle.applyEngineForce(engineForce, FRONT_RIGHT);
+
+        vehicle.setBrake(breakingForce / 2, FRONT_LEFT);
+        vehicle.setBrake(breakingForce / 2, FRONT_RIGHT);
+        vehicle.setBrake(breakingForce, BACK_LEFT);
+        vehicle.setBrake(breakingForce, BACK_RIGHT);
+
+        vehicle.setSteeringValue(vehicleSteering, FRONT_LEFT);
+        vehicle.setSteeringValue(vehicleSteering, FRONT_RIGHT);
+
+
+        var tm, p, q, i;
+        var n = vehicle.getNumWheels();
+        for (i = 0; i < n; i++) {
+          vehicle.updateWheelTransform(i, true);
+          tm = vehicle.getWheelTransformWS(i);
+          p = tm.getOrigin();
+          q = tm.getRotation();
+          wheelMeshes[i].position.set(p.x(), p.y(), p.z());
+          wheelMeshes[i].rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
+          wheelMeshes[i].rotate(BABYLON.Axis.Z, Math.PI / 2);
+        }
+
+        tm = vehicle.getChassisWorldTransform();
+        p = tm.getOrigin();
+        q = tm.getRotation();
+        chassisMesh.position.set(p.x(), p.y(), p.z());
+        chassisMesh.rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
+        chassisMesh.rotate(BABYLON.Axis.X, Math.PI);
+      }
+
+    });
+
     return trans;
   }
 
