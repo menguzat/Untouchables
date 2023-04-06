@@ -114,10 +114,10 @@ photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
   } else {
     //console.log(position);
     const otherPlayer=players.get(id.toString());
-    if (otherPlayer.positionUpdated==false);
+    if (otherPlayer.positionUpdated!=true)
     {
       console.log("updating pos "+id.toString());
-    //  players.get(id.toString()).mesh.setOrigin(position);
+      players.get(id.toString()).mesh.setOrigin(position);
     otherPlayer.positionUpdated = true;
       console.log(id.toString()+" "+otherPlayer.positionUpdated );
     } 
