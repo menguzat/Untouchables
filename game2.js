@@ -110,7 +110,7 @@ photonManager.setOnPlayerPositionUpdate((id,actions,position) => {
       players.set(id, newPlayer);
     } else {
       //console.log(position);
-      players.get(id.toString()).position=position;
+      players.get(id.toString()).setOrigin(new Ammo.btVector3(position.x, position.y, position.z));
       players.get(id.toString()).actions=actions;
     }
 });
