@@ -224,7 +224,7 @@ export class Player {
 
       });
     
-    return compound;
+    return trans;
   }
 
 

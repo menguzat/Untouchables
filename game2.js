@@ -109,7 +109,7 @@ photonManager.setOnPlayerPositionUpdate((id,actions,position) => {
       const newPlayer = new Player(scene, id, false, position);
       players.set(id, newPlayer);
     } else {
-      console.log(position);
+      //console.log(position);
       players.get(id.toString()).position=position;
       players.get(id.toString()).actions=actions;
     }
