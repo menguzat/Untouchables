@@ -56,6 +56,7 @@ photonManager.setOnJoinedRoom(() => {
     if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
       const customProperties = photonManager.photon.myRoom().customProperties;
       const otherPlayerPosition = customProperties[actor.toString()] || new BABYLON.Vector3(0, 0, 0);
+      console.log(otherPlayerPosition);
       
       // Create the other player using their last known position
       const otherPlayer = new Player(scene, actor, false, otherPlayerPosition);
@@ -114,6 +115,7 @@ photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
   if (!players.has(id.toString())) {
     const newPlayer = new Player(scene, id, false, position);
     players.set(id, newPlayer);
+    console.log("other player "+id+"created");
     
   } else {
     //console.log(position);
@@ -125,6 +127,7 @@ photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
     // otherPlayer.positionUpdated = true;
     //   console.log(id.toString()+" "+otherPlayer.positionUpdated );
     // } 
+    console.log( "a"+photonManager.photon.myRoom().customProperties);
     const customProperties = photonManager.photon.myRoom().customProperties;
     customProperties[id.toString()] = position;
     photonManager.photon.setMyRoomCustomProperty(id.toString(), position);
