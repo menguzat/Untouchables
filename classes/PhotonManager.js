@@ -22,8 +22,10 @@ export class PhotonManager {
 
         const room = this.roomList.find(room => room.name === roomName);
         if (room) {
+            console.log("room found, joining");
             this.photon.joinRoom(roomName);
         } else {
+            console.log("room not found,creating");
             this.photon.createRoom(roomName, { maxPlayers: 10 });
         }
     }
@@ -55,8 +57,8 @@ export class PhotonManager {
     onEvent(code, data) {
         // Handle Photon events here
         if (code === 0) {
-            const { id, actions } = data;
-            this.onPlayerPositionUpdate(id, actions);
+            const { id, actions,position } = data;
+            this.onPlayerPositionUpdate(id, actions, position);
         }
     }
 

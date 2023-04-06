@@ -36,21 +36,27 @@ const players = new Map();
 const photonManager = new PhotonManager();
 photonManager.setOnJoinedRoom(() => {
     // Add the local player
-    localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true);
+    localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(0, 0, 5));
     players.set(photonManager.photon.myActor().actorNr.toString(), localPlayer);
 
     const otherActors = photonManager.photon.myRoomActors();
+    console.log(otherActors);
 
     window.addEventListener('keydown', keydown);
     window.addEventListener('keyup', keyup);
 
     console.log("my actor nr "+photonManager.photon.myActor().actorNr);
+  for(var i=1; i<=otherActors.length; i++) {
+    console.log(otherActors[i].actorNr);
+  }
 
-  for (const actor in otherActors) {
+  for (var actor in otherActors) {
+    console.log(actor);
     console.log(actor + " "+photonManager.photon.myActor().actorNr);
     if ( actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
       console.log("creating other player");
-      const otherPlayer = new Player(scene, actor, false);
+      const otherPlayer = new Player(scene, actor, false,);
+      
       console.log("other player created"+ actor);
       players.set(actor.toString(), otherPlayer);
     }
@@ -69,9 +75,11 @@ photonManager.setOnJoinedRoom(() => {
   
   photonManager.setOnActorLeave((actor) => {
     const playerToRemove = players.get(actor.actorNr.toString());
+    console.log(actor)
+    console.log(playerToRemove)
     if (playerToRemove) {
       playerToRemove.destroy();
-      players.delete(actor.actorNr);
+      players.delete(actor);
     }
   });
   photonManager.connect();
@@ -84,7 +92,7 @@ engine.runRenderLoop(() => {
 
         const position = localPlayer.mesh.position;
 
-        const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions};
+        const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: localPlayer.position};
         photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
       }
       
@@ -96,13 +104,14 @@ window.addEventListener('resize', () => {
   engine.resize();
 });
 
-photonManager.setOnPlayerPositionUpdate((id,actions) => {
+photonManager.setOnPlayerPositionUpdate((id,actions,position) => {
 
     if (!players.has(id.toString())) {
       const newPlayer = new Player(scene, id, false, position);
       players.set(id, newPlayer);
     } else {
-
+      console.log(position);
+      players.get(id.toString()).position=position;
       players.get(id.toString()).actions=actions;
     }
 });

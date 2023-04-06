@@ -8,7 +8,7 @@ export class Player {
     this.speed = 0.05;
     this.ZERO_QUATERNION = new BABYLON.Quaternion();
     this.actions = { acceleration: false, braking: false, right: false, left: false };
-    this.mesh=null;
+    this.mesh = null;
     this.init();
   }
 
@@ -19,8 +19,9 @@ export class Player {
     if (this.isLocal) {
       this.setupControls();
     }
+    return this.mesh;
   }
-  
+
   createVehicle(pos, quat) {
     var vehicle, chassisMesh;
     var wheelMeshes = [];
@@ -31,37 +32,37 @@ export class Player {
     var chassisHeight = .6;
     var chassisLength = 4;
     var massVehicle = 200;
-    
+
     var wheelAxisPositionBack = -1;
     var wheelRadiusBack = .4;
     var wheelWidthBack = .3;
     var wheelHalfTrackBack = 1;
     var wheelAxisHeightBack = 0.4;
-    
+
     var wheelAxisFrontPosition = 1.0;
     var wheelHalfTrackFront = 1;
     var wheelAxisHeightFront = 0.4;
     var wheelRadiusFront = .4;
     var wheelWidthFront = .3;
-    
+
     var friction = 5;
     var suspensionStiffness = 10;
     var suspensionDamping = 0.3;
     var suspensionCompression = 4.4;
     var suspensionRestLength = 0.6;
     var rollInfluence = 0.0;
-    
+
     var steeringIncrement = .01;
     var steeringClamp = 0.2;
     var maxEngineForce = 500;
     var maxBreakingForce = 10;
     var incEngine = 10.0;
-    
+
     var FRONT_LEFT = 0;
     var FRONT_RIGHT = 1;
     var BACK_LEFT = 2;
     var BACK_RIGHT = 3;
-    
+
     var wheelDirectionCS0;
     var wheelAxleCS;
 
@@ -103,17 +104,18 @@ export class Player {
     physicsWorld.addAction(vehicle);
 
     var trans = vehicle.getChassisWorldTransform();
-
+    trans.setOrigin(new Ammo.btVector3(this.position.x, this.position.y, this.position.z));
+    //vehicle.setChassisWorldTransform(trans);
     function addWheel(isFront, pos, radius, width, index) {
 
       var wheelInfo = vehicle.addWheel(
-          pos,
-          wheelDirectionCS0,
-          wheelAxleCS,
-          suspensionRestLength,
-          radius,
-          tuning,
-          isFront);
+        pos,
+        wheelDirectionCS0,
+        wheelAxleCS,
+        suspensionRestLength,
+        radius,
+        tuning,
+        isFront);
 
       wheelInfo.set_m_suspensionStiffness(suspensionStiffness);
       wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
@@ -124,7 +126,7 @@ export class Player {
 
       wheelMeshes[index] = createWheelMesh(radius, width);
     }
-    
+
     function createWheelMesh(radius, width) {
       //var mesh = new BABYLON.MeshBuilder.CreateBox("wheel", {width:.82, height:.82, depth:.82});
       var mesh = new BABYLON.MeshBuilder.CreateCylinder("Wheel", { diameter: 1, height: 0.5, tessellation: 6 });
@@ -146,45 +148,45 @@ export class Player {
     addWheel(false, new Ammo.btVector3(wheelHalfTrackBack, wheelAxisHeightBack, wheelAxisPositionBack), wheelRadiusBack, wheelWidthBack, BACK_RIGHT);
 
     vehicleReady = true;
+    
+      this.scene.registerBeforeRender(() => {
+        // var dt = this.engine.getDeltaTime().toFixed() / 1000;
 
-    this.scene.registerBeforeRender(() => {
-      // var dt = this.engine.getDeltaTime().toFixed() / 1000;
-
-      if (vehicleReady) {
+        if (vehicleReady) {
 
           var speed = vehicle.getCurrentSpeedKmHour();
           var maxSteerVal = 0.2;
           breakingForce = 0;
           engineForce = 0;
 
-          console.log("acc: " +this.actions.acceleration);
+          //      console.log("acc: " +this.actions.acceleration);
           if (this.actions.acceleration) {
-              if (speed < -1) {
-                  breakingForce = maxBreakingForce;
-              } else {
-                  engineForce = maxEngineForce;
-              }
+            if (speed < -1) {
+              breakingForce = maxBreakingForce;
+            } else {
+              engineForce = maxEngineForce;
+            }
 
           } else if (this.actions.braking) {
-              if (speed > 1) {
-                  breakingForce = maxBreakingForce;
-              } else {
-                  engineForce = -maxEngineForce;
-              }
+            if (speed > 1) {
+              breakingForce = maxBreakingForce;
+            } else {
+              engineForce = -maxEngineForce;
+            }
           }
 
           if (this.actions.right) {
-              if (vehicleSteering < steeringClamp) {
-                  vehicleSteering += steeringIncrement;
-              }
+            if (vehicleSteering < steeringClamp) {
+              vehicleSteering += steeringIncrement;
+            }
 
           } else if (this.actions.left) {
-              if (vehicleSteering > -steeringClamp) {
-                  vehicleSteering -= steeringIncrement;
-              }
+            if (vehicleSteering > -steeringClamp) {
+              vehicleSteering -= steeringIncrement;
+            }
 
           } else {
-              vehicleSteering = 0;
+            vehicleSteering = 0;
           }
 
           vehicle.applyEngineForce(engineForce, FRONT_LEFT);
@@ -202,13 +204,13 @@ export class Player {
           var tm, p, q, i;
           var n = vehicle.getNumWheels();
           for (i = 0; i < n; i++) {
-              vehicle.updateWheelTransform(i, true);
-              tm = vehicle.getWheelTransformWS(i);
-              p = tm.getOrigin();
-              q = tm.getRotation();
-              wheelMeshes[i].position.set(p.x(), p.y(), p.z());
-              wheelMeshes[i].rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
-              wheelMeshes[i].rotate(BABYLON.Axis.Z, Math.PI / 2);
+            vehicle.updateWheelTransform(i, true);
+            tm = vehicle.getWheelTransformWS(i);
+            p = tm.getOrigin();
+            q = tm.getRotation();
+            wheelMeshes[i].position.set(p.x(), p.y(), p.z());
+            wheelMeshes[i].rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
+            wheelMeshes[i].rotate(BABYLON.Axis.Z, Math.PI / 2);
           }
 
           tm = vehicle.getChassisWorldTransform();
@@ -217,11 +219,11 @@ export class Player {
           chassisMesh.position.set(p.x(), p.y(), p.z());
           chassisMesh.rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
           chassisMesh.rotate(BABYLON.Axis.X, Math.PI);
-      }
+        }
 
-  });
-
-    return vehicle;
+      });
+    
+    return trans;
   }
 
 
@@ -270,5 +272,15 @@ export class Player {
   updatePosition(position) {
     console.log(position);
     this.position = position;
+  }
+  destroy() {
+    // Perform any necessary cleanup operations here
+    if (this.mesh) {
+      this.mesh.dispose();
+      this.scene.getPhysicsEngine().removeAction(this.vehicle);
+      console.log(`Player ${this.id} destroyed`);
+    } else {
+      console.warn(`Attempted to destroy player ${this.id} but mesh is not initialized`);
+    }
   }
 }
