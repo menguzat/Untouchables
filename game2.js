@@ -55,6 +55,8 @@ photonManager.setOnJoinedRoom(() => {
     console.log(actor + " " + photonManager.photon.myActor().actorNr);
     if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
       console.log("pos-"+actor.toString());
+
+      
       const otherPlayerPosition = photonManager.photon.myRoom().getCustomProperty("pos-"+actor.toString());
       console.log(otherPlayerPosition);
     
@@ -101,7 +103,7 @@ engine.runRenderLoop(() => {
 
     const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: localPlayer.position };
     photonManager.photon.myRoom().setCustomProperty("pos-"+photonManager.photon.myActor().actorNr.toString(), position);
-
+    
     photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
