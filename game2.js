@@ -114,7 +114,7 @@ photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
 
   if (!players.has(id.toString())) {
     const newPlayer = new Player(scene, id, false, position);
-    players.set(id, newPlayer);
+    players.set(id.toString(), newPlayer);
     console.log("other player "+id+"created");
     
   } else {
