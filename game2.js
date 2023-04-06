@@ -54,8 +54,8 @@ photonManager.setOnJoinedRoom(() => {
     console.log(actor);
     console.log(actor + " " + photonManager.photon.myActor().actorNr);
     if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
-      console.log("creating other player");
-      const otherPlayer = new Player(scene, actor, false,);
+      const otherPlayerPosition = photonManager.playerPositions.get(actor.toString()) || new BABYLON.Vector3(0, 0, 0);
+      const otherPlayer = new Player(scene, actor, false,otherPlayerPosition);
       console.log(otherPlayer);
       players.set(actor.toString(), otherPlayer);
 
@@ -106,6 +106,7 @@ window.addEventListener('resize', () => {
 });
 
 photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
+  photonManager.playerPositions.set(id.toString(), position);
 
   if (!players.has(id.toString())) {
     const newPlayer = new Player(scene, id, false, position);
@@ -116,8 +117,8 @@ photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
     const otherPlayer=players.get(id.toString());
     if (otherPlayer.positionUpdated!=true)
     {
-      console.log("updating pos "+id.toString());
-      players.get(id.toString()).mesh.setOrigin(position);
+      console.log("updating pos "+id.toString() + " " + position);
+      players.get(id.toString()).mesh.position=position;
     otherPlayer.positionUpdated = true;
       console.log(id.toString()+" "+otherPlayer.positionUpdated );
     } 
