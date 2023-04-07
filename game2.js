@@ -52,18 +52,26 @@ photonManager.setOnJoinedRoom(() => {
 
   for (var actor in otherActors) {
     console.log(actor);
-    console.log(actor + " " + photonManager.photon.myActor().actorNr);
-    if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
-      console.log("pos-"+actor.toString());
 
-      
-      const otherPlayerPosition = photonManager.photon.myRoom().getCustomProperty("pos-"+actor.toString());
-      console.log(otherPlayerPosition);
-    
-      console.log(otherPlayerPosition._x + " " + otherPlayerPosition._y + " " + otherPlayerPosition._z);
-      
+    if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
+      const cp = photonManager.photon.myRoom().getCustomProperties();
+      console.log(cp);
+      for (const id in cp) {
+        
+        if(id=="pos-"+actor.toString()){
+             var otherPlayerPosition  = cp[id];
+             var otherPlayerRotation = cp["rot-"+actor.toString()];
+          break;
+            }
+      }
+      // console.log(position);
+
+       console.log(otherPlayerPosition);
+
+      // console.log(otherPlayerPosition._x + " " + otherPlayerPosition._y + " " + otherPlayerPosition._z);
+
       // Create the other player using their last known position
-      const otherPlayer = new Player(scene, actor, false, new BABYLON.Vector3(otherPlayerPosition._x, otherPlayerPosition._y, otherPlayerPosition._z));
+      const otherPlayer = new Player(scene, actor, false, new BABYLON.Vector3(otherPlayerPosition._x, otherPlayerPosition._y, otherPlayerPosition._z),new BABYLON.Quaternion(otherPlayerRotation._w,otherPlayerRotation._x, -otherPlayerRotation._y, otherPlayerRotation._z) );
       console.log(otherPlayer);
       players.set(actor.toString(), otherPlayer);
 
@@ -100,10 +108,14 @@ engine.runRenderLoop(() => {
   if (localPlayer != null) {
 
     const position = localPlayer.mesh.position;
-
-    const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: localPlayer.position };
-    photonManager.photon.myRoom().setCustomProperty("pos-"+photonManager.photon.myActor().actorNr.toString(), position);
+    const rotation = localPlayer.mesh.rotationQuaternion;
     
+    
+    const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation:rotation};
+    debug(position);
+    
+    //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
+    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position,rotation);
     photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
@@ -115,28 +127,36 @@ window.addEventListener('resize', () => {
   engine.resize();
 });
 
-photonManager.setOnPlayerPositionUpdate((id, actions, position) => {
-  photonManager.playerPositions.set(id.toString(), position);
+photonManager.setOnPlayerPositionUpdate((id, actions, position, rotation) => {
+   if(id.toString()==photonManager.photon.myActor().actorNr.toString()) return;
+   photonManager.playerPositions.set(id.toString(), position);
+  
+  // if (!players.has(id.toString())) {
+  //   const newPlayer = new Player(scene, id, false, position);
+  //   players.set(id.toString(), newPlayer);
+  //   console.log("other player " + id + "created");
 
-  if (!players.has(id.toString())) {
-    const newPlayer = new Player(scene, id, false, position);
-    players.set(id.toString(), newPlayer);
-    console.log("other player "+id+"created");
-    
-  } else {
-    //console.log(position);
-    // const otherPlayer=players.get(id.toString());
-    // if (otherPlayer.positionUpdated!=true)
-    // {
-    //   console.log("updating pos "+id.toString() + " " + position);
-    //   players.get(id.toString()).mesh.position=position;
-    // otherPlayer.positionUpdated = true;
-    //   console.log(id.toString()+" "+otherPlayer.positionUpdated );
-    // } 
-   
-  //  console.log(customProperties[id.toString()]);
+  // } else {
+  //   //console.log(position);
+      const otherPlayer=players.get(id.toString());
+  //   // if (otherPlayer.positionUpdated!=true)
+  //   // {
+        console.log( position);
+   otherPlayer.mesh.position.x=position._x;
+   otherPlayer.mesh.position.y=position._y;
+   otherPlayer.mesh.position.z=position._z;
+   otherPlayer.mesh.rotationQuaternion.w=rotation._w;
+   otherPlayer.mesh.rotationQuaternion.x=rotation._x;
+   otherPlayer.mesh.rotationQuaternion.y=-rotation._y;
+   otherPlayer.mesh.rotationQuaternion.z=-rotation._z;
+  //   console.log(otherPlayer.mesh.position-); 
+  //   // otherPlayer.positionUpdated = -true;
+  //    //  console.log(id.toString()+" "+otherPlayer.mesh.position._x );
+  //   // } 
+
+    //  console.log(customProperties[id.toString()]);
     players.get(id.toString()).actions = actions;
-  }
+  // }
 });
 
 var keysActions = {
@@ -164,4 +184,7 @@ function keydown(e) {
 
     //return false;
   }
+}
+function debug(t) {
+  document.getElementById("debug").innerHTML = t+"<br>";
 }

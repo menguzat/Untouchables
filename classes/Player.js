@@ -1,10 +1,11 @@
 export class Player {
-  constructor(scene, id, isLocal, position = new BABYLON.Vector3(0, 0, 0)) {
+  constructor(scene, id, isLocal, position = new BABYLON.Vector3(0, 0, 0), rotation=new BABYLON.Quaternion()) {
     this.scene = scene;
     this.engine = scene.getEngine();
     this.id = id;
     this.isLocal = isLocal;
     this.position = position;
+    this.rotation = rotation;
     this.speed = 0.05;
     this.ZERO_QUATERNION = new BABYLON.Quaternion();
     this.actions = { acceleration: false, braking: false, right: false, left: false };
@@ -14,8 +15,9 @@ export class Player {
   }
 
   init() {
-    this.mesh = this.createVehicle(this.position, this.ZERO_QUATERNION);
-    this.mesh.position = this.position;
+    this.mesh = this.createVehicle(this.position, this.rotation);
+    this.mesh.position = this.position; 
+    this.mesh.rotationQuaternion= this.rotation; 
     this.positionUpdated=false;
     console.log("player " + this.id + " created");
     if (this.isLocal) {
@@ -228,34 +230,12 @@ export class Player {
 
     });
 
-    return trans;
+    return chassisMesh  ;
   }
 
 
   setupControls() {
-    this.scene.actionManager = new BABYLON.ActionManager(this.scene);
-
-    this.scene.actionManager.registerAction(
-      new BABYLON.ExecuteCodeAction(
-        BABYLON.ActionManager.OnKeyDownTrigger,
-        (evt) => {
-          switch (evt.sourceEvent.key) {
-            case 'w':
-              this.moveForward();
-              break;
-            case 'a':
-              this.moveLeft();
-              break;
-            case 's':
-              this.moveBackward();
-              break;
-            case 'd':
-              this.moveRight();
-              break;
-          }
-        }
-      )
-    );
+   
   }
 
   moveForward() {

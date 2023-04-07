@@ -28,8 +28,19 @@ export class PhotonManager {
             this.photon.joinRoom(roomName);
         } else {
             console.log("room not found,creating");
-            this.photon.createRoom(roomName, { maxPlayers: 10 });
+            this.photon.createRoom(roomName, { maxPlayers: 10,   broadcastPropsChangeToAll: true
+            });
         }
+    }
+    sendPlayerPositionUpdate(id, position,rotation) {
+        // Broadcast position update using a custom event (e.g., code: 1)
+      //  this.photon.raiseEvent(1, { id, position });
+    
+        // Update the local user's position in custom properties
+        
+        this.photon.myRoom().setCustomProperties({ ["pos-"+id.toString()]: position , ["rot-"+id.toString()]: rotation }, { webForward: true });
+       // console.log(this.photon.myRoom().getCustomProperties());
+        
     }
     setOnPlayerPositionUpdate(callback) {
         this.onPlayerPositionUpdate = callback;
@@ -38,6 +49,8 @@ export class PhotonManager {
         this.onJoinedRoom = callback;
     }
     onActorJoin(actor) {
+        this.photon.myRoom().setCustomProperty(actor.actorNr, { position: { x: 0, y: 0, z: 0 },rotation: { w:0, x: 0, y: 0, z: 0 }  });
+
         if (this.actorJoinCallback) {
             this.actorJoinCallback(actor);
         }
@@ -59,8 +72,12 @@ export class PhotonManager {
     onEvent(code, data) {
         // Handle Photon events here
         if (code === 0) {
-            const { id, actions,position } = data;
-            this.onPlayerPositionUpdate(id, actions, position);
+            const { id, actions,position, rotation } = data;
+            this.onPlayerPositionUpdate(id, actions, position, rotation);
+        }
+        else if (code === 1) { // Add this
+            const { id, position } = data;
+            this.playerPositions.set(id, position, rotation);
         }
     }
 
@@ -80,7 +97,7 @@ export class PhotonManager {
     onRoomList(rooms) {
         console.log(rooms);
         this.roomList = rooms;
-        this.joinOrCreateRoom("test");
+        this.joinOrCreateRoom("test23");
     }
 
 }
