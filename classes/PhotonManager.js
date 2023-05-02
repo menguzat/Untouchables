@@ -43,27 +43,6 @@ export class PhotonManager {
     }
     onActorJoin(actor) {
         // If the joining actor is the current client, no need to set its custom properties
-        if (this.photon.myActor().actorNr === actor.actorNr) {
-            return;
-        }
-
-        const position = { x: 0, y: 0, z: 0 };
-        const rotation = { w: 0, x: 0, y: 0, z: 0 };
-
-        // Check if there is an existing player with the same actor number
-        const existingPlayer = this.playerPositions.get(actor.actorNr.toString());
-        if (existingPlayer) {
-            position.x = existingPlayer.x;
-            position.y = existingPlayer.y;
-            position.z = existingPlayer.z;
-            rotation.w = existingPlayer.w;
-            rotation.x = existingPlayer.x;
-            rotation.y = existingPlayer.y;
-            rotation.z = existingPlayer.z;
-        }
-
-        // Set the custom properties for the joining actor
-        this.photon.myRoom().setCustomProperties({ [`pos-${actor.actorNr}`]: position, [`rot-${actor.actorNr}`]: rotation }, { webForward: true });
 
         if (this.actorJoinCallback) {
             this.actorJoinCallback(actor);
@@ -83,13 +62,11 @@ s
     }
     onEvent(code, data) {
         // Handle Photon events here
-        if (code === 0) {
-            const { id, actions, position, rotation } = data;
-            this.onPlayerPositionUpdate(id, actions, position, rotation);
-        }
-        else if (code === 1) { // Add this
+    if (code === 1) { // Add this
             
             const { id, position, rotation  } = data;
+
+
             this.playerPositions.set(id, position, rotation);
             this.onPlayerPositionUpdate(id,  position, rotation);
 

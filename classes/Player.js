@@ -1,5 +1,6 @@
 export class Player {
   constructor(scene, id, isLocal, position = new BABYLON.Vector3(0, 0, 0), rotation=new BABYLON.Quaternion()) {
+    console.log(position);
     this.scene = scene;
     this.engine = scene.getEngine();
     this.id = id;
@@ -11,6 +12,7 @@ export class Player {
     this.actions = { acceleration: false, braking: false, right: false, left: false, drift: false, boost: false, special: false, special2: false, special3: false };
     this.mesh = null;
     this.positionUpdated=false;
+    this.previousState=null;
     this.respawnPosition = position.clone();
     this.advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
     this.specialActive = false;
@@ -19,9 +21,24 @@ export class Player {
     this.lastSpecialTime = 0;
     this.lastSpecial2Time = 0;
     this.lastSpecial3Time = 0;
+    this.wheelMeshes = [];
     this.init();
   }
-
+  updatePhysicsBody(position, rotation) {
+    if (this.body) {
+      const ammoPosition = new Ammo.btVector3(position._x, position._y, position._z);
+      const ammoRotation = new Ammo.btQuaternion(rotation._x, rotation._y, rotation._z, rotation._w);
+      const ammoTransform = new Ammo.btTransform();
+      ammoTransform.setIdentity();
+      ammoTransform.setOrigin(ammoPosition);
+      ammoTransform.setRotation(ammoRotation);
+      this.body.setWorldTransform(ammoTransform);
+      this.mesh.position.copyFrom(position);
+    this.mesh.rotationQuaternion.copyFrom(rotation);
+    } else {
+      console.warn(`Attempted to update physics body for player ${this.id} but body is not initialized`);
+    }
+  }
   init() {
     this.mesh = this.createVehicle(this.position, this.rotation);
     this.mesh.position = this.position;
@@ -39,6 +56,10 @@ export class Player {
       this.createButtons();
       this.createJoystick();
       this.setupControls();
+    }
+    else {
+     // this.mesh.physicsImpostor.setMass(0);
+
     }
     
     this.mesh.setOr
@@ -352,7 +373,7 @@ export class Player {
   }
 
   createVehicle(pos, quat) {
-    function addWheel(isFront, pos, radius, width, index) {
+    const addWheel = (isFront, pos, radius, width, index) => {
 
       var wheelInfo = vehicle.addWheel(
         pos,
@@ -375,11 +396,11 @@ export class Player {
       var wheelMaterial = new BABYLON.StandardMaterial("wheelMaterial");
       wheelMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     
-      wheelMeshes[index] = createWheelMesh(radius, width);
+      this.wheelMeshes[index] = createWheelMesh(radius, width);
       if (isFront) {
         var wheelMaterial = new BABYLON.StandardMaterial("wheelMaterial");
         wheelMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-        wheelMeshes[index].material = wheelMaterial;
+        this.wheelMeshes[index].material = wheelMaterial;
       }
     }
 
@@ -397,7 +418,7 @@ export class Player {
     }
 
     var vehicle, chassisMesh;
-    var wheelMeshes = [];
+    
 
     var vehicleReady = false;
 
@@ -494,7 +515,7 @@ export class Player {
     vehicleReady = true;
 
     this.scene.registerBeforeRender(() => {
-      // var dt = this.engine.getDeltaTime().toFixed() / 1000;
+      // var dt = this.engine.getDeltaTime().toFixed() / 1000;,
 
       if (vehicleReady) {
 
@@ -668,9 +689,9 @@ export class Player {
           tm = vehicle.getWheelTransformWS(i);
           p = tm.getOrigin();
           q = tm.getRotation();
-          wheelMeshes[i].position.set(p.x(), p.y(), p.z());
-          wheelMeshes[i].rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
-          wheelMeshes[i].rotate(BABYLON.Axis.Z, Math.PI / 2);
+          this.wheelMeshes[i].position.set(p.x(), p.y(), p.z());
+          this.wheelMeshes[i].rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
+          this.wheelMeshes[i].rotate(BABYLON.Axis.Z, Math.PI / 2);
         }
 
         tm = vehicle.getChassisWorldTransform();
@@ -678,7 +699,7 @@ export class Player {
         q = tm.getRotation();
         chassisMesh.position.set(p.x(), p.y(), p.z());
         chassisMesh.rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
-        chassisMesh.rotate(BABYLON.Axis.X, Math.PI);
+        //chassisMesh.rotate(BABYLON.Axis.X, Math.PI);
       }
       if (chassisMesh.position.y < -5) {
         this.respawn();
@@ -715,8 +736,12 @@ export class Player {
 
   destroy() {
     if (this.mesh) {
+      this.wheelMeshes.forEach((wheelMesh) => {wheelMesh.dispose()});
       this.mesh.dispose();
-      this.scene.getPhysicsEngine().removeAction(this.vehicle);
+      
+      if(this.isLocal)
+        this.scene.getPhysicsEngine().removeAction(this.vehicle);
+      
       console.log(`Player ${this.id} destroyed`);
     } else {
       console.warn(`Attempted to destroy player ${this.id} but mesh is not initialized`);

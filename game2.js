@@ -7,6 +7,10 @@ const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, adaptToDeviceRatio: true });
 const scene = new BABYLON.Scene(engine);
 
+
+let divFps = document.getElementById("debug");
+
+divFps.innerHTML = engine.getFps().toFixed() + " fps";
 await Ammo();
 
 scene.enablePhysics(new BABYLON.Vector3(0, -20, 0), new BABYLON.AmmoJSPlugin());
@@ -81,7 +85,7 @@ photonManager.setOnJoinedRoom(() => {
         }
       }
       // Create the other player using their last known position
-      const otherPlayer = new Player(scene, actor, false, new BABYLON.Vector3(otherPlayerPosition._x, otherPlayerPosition._y, otherPlayerPosition._z), new BABYLON.Quaternion(otherPlayerRotation._w, otherPlayerRotation._x, -otherPlayerRotation._y, otherPlayerRotation._z));
+      const otherPlayer = new Player(scene, actor, false, new BABYLON.Vector3(otherPlayerPosition._x, otherPlayerPosition._y, otherPlayerPosition._z), new BABYLON.Quaternion(otherPlayerRotation._w, otherPlayerRotation._x, otherPlayerRotation._y, otherPlayerRotation._z));
       console.log(otherPlayer);
       players.set(actor.toString(), otherPlayer);
     }
@@ -89,11 +93,33 @@ photonManager.setOnJoinedRoom(() => {
 });
 
 photonManager.setOnActorJoin((actor) => {
+
   console.log("actor joined " + photonManager.photon.myActor().actorNr + " " + actor.actorNr);
   if (photonManager.photon.myActor().actorNr === actor.actorNr) {
     return;
   }
-  const newPlayer = new Player(scene, actor.actorNr, false);
+
+
+  const newposition= new BABYLON.Vector3(0, 0, 0);
+  const newrotation=new BABYLON.Quaternion();
+
+// Check if there is an existing player with the same actor number
+const existingPlayer = photonManager.playerPositions.get(actor.actorNr.toString());
+if (existingPlayer) {
+  newposition._x = existingPlayer.x;
+  newposition._y = existingPlayer.y;
+  newposition._z = existingPlayer.z;
+    newrotation._w = existingPlayer.w;
+    newrotation._x = existingPlayer.x;
+    newrotation._y = existingPlayer.y;
+    newrotation._z = existingPlayer.z;
+}
+
+
+// Set the custom properties for the joining actor
+photonManager.photon.myRoom().setCustomProperties({ [`pos-${actor.actorNr}`]: newposition, [`rot-${actor.actorNr}`]: newrotation }, { webForward: true });
+
+  const newPlayer = new Player(scene, actor.actorNr, false,newposition,newrotation);
   players.set(actor.actorNr.toString(), newPlayer);
   console.log("new player joined" + actor);
 });
@@ -111,36 +137,68 @@ photonManager.connect();
 
 // Set up the main game loop
 engine.runRenderLoop(() => {
+  if (localPlayer != null) {
+    const position = localPlayer.mesh.position;
+    const rotation = localPlayer.mesh.rotationQuaternion;
+    const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation: rotation };
 
+    //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
+    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation);
+    photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
+  }
   scene.render();
 });
-  setInterval(()=> {
-    if (localPlayer != null) {
-      const position = localPlayer.mesh.position;
-      const rotation = localPlayer.mesh.rotationQuaternion;
-      const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation: rotation };
 
-      //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
-      photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation);
-      photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
-    }
-  }, 100);
-photonManager.setOnPlayerPositionUpdate((id, actions, position, rotation) => {
+photonManager.setOnPlayerPositionUpdate((id,  position, rotation) => {
+  
   if (id.toString() == photonManager.photon.myActor().actorNr.toString()) return;
-  photonManager.playerPositions.set(id.toString(), position);
+
+  photonManager.playerPositions.set(id.toString(), { position: position, rotation: rotation, timestamp: Date.now() });
 
   const otherPlayer = players.get(id.toString());
 
-  otherPlayer.mesh.position.x = position._x;
-  otherPlayer.mesh.position.y = position._y;
-  otherPlayer.mesh.position.z = position._z;
-  otherPlayer.mesh.rotationQuaternion.w = rotation._w;
-  otherPlayer.mesh.rotationQuaternion.x = rotation._x;
-  otherPlayer.mesh.rotationQuaternion.y = -rotation._y;
-  otherPlayer.mesh.rotationQuaternion.z = -rotation._z;
+  // Interpolation
+  const interpolate = (start, end, t) => {
+    var newstart = new BABYLON.Vector3(start._x, start._y, start._z);
+    return BABYLON.Vector3.Lerp(newstart, end, t);
+  };
 
-  players.get(id.toString()).actions = actions;
+  const interpolateRotation = (start, end, t) => {
+    return BABYLON.Quaternion.Slerp(start, end, t);
+  };
+
+  const interpolatePlayer = (player, newPosition, newRotation, interpolationTime) => {
+    const currentTime = Date.now();
+    const previousState = player.previousState;
+    const targetState = { position: newPosition, rotation: newRotation, timestamp: currentTime };
+
+    if (previousState) {
+      const deltaTime = currentTime - previousState.timestamp;
+      const t = Math.min(deltaTime / interpolationTime, 1);
+      const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
+      const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
+
+      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation);
+    } else {
+      player.updatePhysicsBody(newPosition, newRotation);
+    }
+
+    player.previousState = targetState;
+  };
+
+  // Client-side prediction
+  if (otherPlayer) {
+    const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);
+    const newRotation = new BABYLON.Quaternion(rotation._x, rotation._y, rotation._z, rotation._w);
+    const interpolationTime = 100; // Adjust this value to control the interpolation speed
+
+    interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
+  }
 });
+
+// interploation & prediction
+
+
 
 var keysActions = {
   "KeyW": 'acceleration',
