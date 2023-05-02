@@ -1,6 +1,6 @@
 // Import the classes
-import { Player } from '../classes/Player.js';
-import { PhotonManager } from '../classes/PhotonManager.js';
+import { Player } from './classes/Player.js';
+import { PhotonManager } from './classes/PhotonManager.js';
 
 // Create the Babylon.js engine and scene
 const canvas = document.getElementById('renderCanvas');
