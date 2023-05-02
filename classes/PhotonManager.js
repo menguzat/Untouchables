@@ -33,7 +33,7 @@ export class PhotonManager {
 
     sendPlayerPositionUpdate(id, position, rotation) {
         this.photon.raiseEvent(1, { id: id, position: position, rotation: rotation }, { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.Others });
-        wwwwwwthis.photon.myRoom().setCustomProperties({ ["pos-" + id.toString()]: position, ["rot-" + id.toString()]: rotation }, { webForward: true });
+        this.photon.myRoom().setCustomProperties({ ["pos-" + id.toString()]: position, ["rot-" + id.toString()]: rotation }, { webForward: true });
     }
     setOnPlayerPositionUpdate(callback) {
         this.onPlayerPositionUpdate = callback;

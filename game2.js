@@ -74,14 +74,14 @@ photonManager.setOnJoinedRoom(() => {
     if (actor.toString() !== photonManager.photon.myActor().actorNr.toString()) {
       const cp = photonManager.photon.myRoom().getCustomProperties();
       for (const id in cp) {
-        if(id=="pos-"+actor.toString()){
-             var otherPlayerPosition  = cp[id];
-             var otherPlayerRotation = cp["rot-"+actor.toString()];
+        if (id == "pos-" + actor.toString()) {
+          var otherPlayerPosition = cp[id];
+          var otherPlayerRotation = cp["rot-" + actor.toString()];
           break;
         }
       }
       // Create the other player using their last known position
-      const otherPlayer = new Player(scene, actor, false, new BABYLON.Vector3(otherPlayerPosition._x, otherPlayerPosition._y, otherPlayerPosition._z),new BABYLON.Quaternion(otherPlayerRotation._w,otherPlayerRotation._x, -otherPlayerRotation._y, otherPlayerRotation._z) );
+      const otherPlayer = new Player(scene, actor, false, new BABYLON.Vector3(otherPlayerPosition._x, otherPlayerPosition._y, otherPlayerPosition._z), new BABYLON.Quaternion(otherPlayerRotation._w, otherPlayerRotation._x, -otherPlayerRotation._y, otherPlayerRotation._z));
       console.log(otherPlayer);
       players.set(actor.toString(), otherPlayer);
     }
@@ -111,34 +111,35 @@ photonManager.connect();
 
 // Set up the main game loop
 engine.runRenderLoop(() => {
-  if (localPlayer != null) {
-    const position = localPlayer.mesh.position;
-    const rotation = localPlayer.mesh.rotationQuaternion;
-    const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation:rotation};
-
-    //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
-    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position,rotation);
-    photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
-  }
 
   scene.render();
 });
+  setInterval(()=> {
+    if (localPlayer != null) {
+      const position = localPlayer.mesh.position;
+      const rotation = localPlayer.mesh.rotationQuaternion;
+      const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation: rotation };
 
+      //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
+      photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation);
+      photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
+    }
+  }, 100);
 photonManager.setOnPlayerPositionUpdate((id, actions, position, rotation) => {
-   if(id.toString()==photonManager.photon.myActor().actorNr.toString()) return;
-   photonManager.playerPositions.set(id.toString(), position);
+  if (id.toString() == photonManager.photon.myActor().actorNr.toString()) return;
+  photonManager.playerPositions.set(id.toString(), position);
 
-   const otherPlayer=players.get(id.toString());
+  const otherPlayer = players.get(id.toString());
 
-   otherPlayer.mesh.position.x=position._x;
-   otherPlayer.mesh.position.y=position._y;
-   otherPlayer.mesh.position.z=position._z;
-   otherPlayer.mesh.rotationQuaternion.w=rotation._w;
-   otherPlayer.mesh.rotationQuaternion.x=rotation._x;
-   otherPlayer.mesh.rotationQuaternion.y=-rotation._y;
-   otherPlayer.mesh.rotationQuaternion.z=-rotation._z;
+  otherPlayer.mesh.position.x = position._x;
+  otherPlayer.mesh.position.y = position._y;
+  otherPlayer.mesh.position.z = position._z;
+  otherPlayer.mesh.rotationQuaternion.w = rotation._w;
+  otherPlayer.mesh.rotationQuaternion.x = rotation._x;
+  otherPlayer.mesh.rotationQuaternion.y = -rotation._y;
+  otherPlayer.mesh.rotationQuaternion.z = -rotation._z;
 
-   players.get(id.toString()).actions = actions;
+  players.get(id.toString()).actions = actions;
 });
 
 var keysActions = {
