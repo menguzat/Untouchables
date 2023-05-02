@@ -1,16 +1,111 @@
 html, body {
-    position: absolute;
+    position: relative;
     width: 100%;
     height: 100%;
     margin:0;
     padding: 0;
     overflow: hidden;
     z-index: -1;
+    touch-action: none;
+    user-select: none;
 }
-
 canvas {
-    position: absolute;
     width: 100%;
     height: 100%;
     z-index: -1;
+    touch-action: pan-x pan-y;
+    user-select: none;
 }
+
+/* Font Family */
+@import url("https://p.typekit.net/p.css?s=1&k=fnl6tbh&ht=tk&f=43349.43352.43354.43357&a=25765237&app=typekit&e=css");
+
+@font-face {
+font-family:"video";
+src:url("https://use.typekit.net/af/03c70f/00000000000000007735cbd6/30/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff2"),url("https://use.typekit.net/af/03c70f/00000000000000007735cbd6/30/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff"),url("https://use.typekit.net/af/03c70f/00000000000000007735cbd6/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:400;font-stretch:normal;
+}
+
+@font-face {
+font-family:"video";
+src:url("https://use.typekit.net/af/70cf29/00000000000000007735cbdd/30/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff2"),url("https://use.typekit.net/af/70cf29/00000000000000007735cbdd/30/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff"),url("https://use.typekit.net/af/70cf29/00000000000000007735cbdd/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:700;font-stretch:normal;
+}
+
+@font-face {
+font-family:"video-cond";
+src:url("https://use.typekit.net/af/12d434/00000000000000007735cbc9/30/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff2"),url("https://use.typekit.net/af/12d434/00000000000000007735cbc9/30/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff"),url("https://use.typekit.net/af/12d434/00000000000000007735cbc9/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:400;font-stretch:normal;
+}
+
+@font-face {
+font-family:"video-cond";
+src:url("https://use.typekit.net/af/a93cce/00000000000000007735cbd4/30/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff2"),url("https://use.typekit.net/af/a93cce/00000000000000007735cbd4/30/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff"),url("https://use.typekit.net/af/a93cce/00000000000000007735cbd4/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("opentype");
+font-display:auto;font-style:normal;font-weight:700;font-stretch:normal;
+}
+
+.tk-video { font-family: "video",serif; }
+.tk-video-cond { font-family: "video-cond",serif; }
+/*  */
+
+/* loading screen */
+#loading-screen {
+    width: 100%;
+    height: 100%;
+    background-image: url('../textures/blackcolor.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    z-index: 9999;
+}
+#logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+#logo {
+  width: 200px;
+  height: 200px;
+  background-image: url('../textures/Loading_ROWA.gif');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+#info-text {
+    font-family: "video",serif;
+    font-size: 16px;
+    color: #fff;
+}
+/*  */
+
+/* orientation Warning. */
+#orientation-warning {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 9999;
+    background-color: black;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    touch-action: none;
+    user-select: none;
+}
+
+#orientation-text {
+    font-family: "video",serif;
+    font-size: 16px;
+    color: #fff;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+/*  */

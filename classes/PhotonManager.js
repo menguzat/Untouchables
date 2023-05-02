@@ -12,16 +12,13 @@ export class PhotonManager {
         this.photon.onActorJoin = this.onActorJoin.bind(this);
         this.photon.onActorLeave = this.onActorLeave.bind(this);
         this.photon.onRoomList = this.onRoomList.bind(this);
-        this.playerPositions = new Map(); // Add this line
+        this.playerPositions = new Map();
 
     }
-
     connect() {
         this.photon.connectToRegionMaster('eu');
     }
-
     joinOrCreateRoom(roomName) {
-
         const room = this.roomList.find(room => room.name === roomName);
         if (room) {
             console.log("room found, joining");
@@ -33,14 +30,7 @@ export class PhotonManager {
         }
     }
     sendPlayerPositionUpdate(id, position,rotation) {
-        // Broadcast position update using a custom event (e.g., code: 1)
-      //  this.photon.raiseEvent(1, { id, position });
-    
-        // Update the local user's position in custom properties
-        
         this.photon.myRoom().setCustomProperties({ ["pos-"+id.toString()]: position , ["rot-"+id.toString()]: rotation }, { webForward: true });
-       // console.log(this.photon.myRoom().getCustomProperties());
-        
     }
     setOnPlayerPositionUpdate(callback) {
         this.onPlayerPositionUpdate = callback;
@@ -55,17 +45,14 @@ export class PhotonManager {
             this.actorJoinCallback(actor);
         }
     }
-
     onActorLeave(actor) {
         if (this.actorLeaveCallback) {
             this.actorLeaveCallback(actor);
         }
     }
-
     setOnActorJoin(callback) {
         this.actorJoinCallback = callback;
     }
-
     setOnActorLeave(callback) {
         this.actorLeaveCallback = callback;
     }
@@ -80,11 +67,9 @@ export class PhotonManager {
             this.playerPositions.set(id, position, rotation);
         }
     }
-
     onError(errorCode, errorMsg) {
         console.error(`Photon Error: ${errorCode} - ${errorMsg}`);
     }
-
     onStateChange(state) {
         if (state === Photon.LoadBalancing.LoadBalancingClient.State.JoinedLobby) {
             // this.joinOrCreateRoom('test');
@@ -99,6 +84,4 @@ export class PhotonManager {
         this.roomList = rooms;
         this.joinOrCreateRoom("test23");
     }
-
 }
-
