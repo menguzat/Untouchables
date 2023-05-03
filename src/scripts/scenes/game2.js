@@ -1,16 +1,15 @@
 // Import the classes
-import { Player } from './classes/Player.js';
-import { PhotonManager } from './classes/PhotonManager.js';
+import { Player } from '../classes/Player.js';
+import { PhotonManager } from '../classes/PhotonManager.js';
 
 // Create the Babylon.js engine and scene
 const canvas = document.getElementById('renderCanvas');
 const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, adaptToDeviceRatio: true });
 const scene = new BABYLON.Scene(engine);
 
-
 let divFps = document.getElementById("debug");
+let ping = 0;
 
-divFps.innerHTML = engine.getFps().toFixed() + " fps";
 await Ammo();
 
 scene.enablePhysics(new BABYLON.Vector3(0, -20, 0), new BABYLON.AmmoJSPlugin());
@@ -135,6 +134,10 @@ photonManager.setOnActorLeave((actor) => {
 });
 photonManager.connect();
 
+setInterval(() => {
+  ping = photonManager.getPing();
+}, 1000);
+
 // Set up the main game loop
 engine.runRenderLoop(() => {
   if (localPlayer != null) {
@@ -146,6 +149,10 @@ engine.runRenderLoop(() => {
     photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation);
     photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
+
+  divFps.innerHTML = engine.getFps().toFixed() + " fps";
+  divFps.innerHTML += "<br/>" + `${ping} ms`;
+
   scene.render();
 });
 
@@ -195,10 +202,6 @@ photonManager.setOnPlayerPositionUpdate((id,  position, rotation) => {
     interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
   }
 });
-
-// interploation & prediction
-
-
 
 var keysActions = {
   "KeyW": 'acceleration',

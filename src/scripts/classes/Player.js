@@ -33,8 +33,8 @@ export class Player {
       ammoTransform.setOrigin(ammoPosition);
       ammoTransform.setRotation(ammoRotation);
       this.body.setWorldTransform(ammoTransform);
-      this.mesh.position.copyFrom(position);
-    this.mesh.rotationQuaternion.copyFrom(rotation);
+    //   this.mesh.position.copyFrom(position);
+    // this.mesh.rotationQuaternion.copyFrom(rotation);
     } else {
       console.warn(`Attempted to update physics body for player ${this.id} but body is not initialized`);
     }

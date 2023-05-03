@@ -48,7 +48,6 @@ export class PhotonManager {
             this.actorJoinCallback(actor);
         }
     }
-s
     onActorLeave(actor) {
         if (this.actorLeaveCallback) {
             this.actorLeaveCallback(actor);
@@ -88,5 +87,8 @@ s
         console.log(rooms);
         this.roomList = rooms;
         this.joinOrCreateRoom("test23");
+    }
+    getPing() {
+        return this.photon.getRtt();
     }
 }

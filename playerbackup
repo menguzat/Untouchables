@@ -1,0 +1,67 @@
+export class Player {
+    constructor(scene, id, isLocal, position = new BABYLON.Vector3(0, 0, 0)) {
+      this.scene = scene;
+      this.id = id;
+      this.isLocal = isLocal;
+      this.position = position;
+      this.speed = 0.05;
+
+      this.init();
+    }
+  
+    init() {
+      this.mesh = BABYLON.MeshBuilder.CreateBox(`player-${this.id}`, {}, this.scene);
+      this.mesh.position = this.position;
+        console.log("player "+this.id+" created");
+      if (this.isLocal) {
+        this.setupControls();
+      }
+    }
+  
+    setupControls() {
+      this.scene.actionManager = new BABYLON.ActionManager(this.scene);
+      
+      this.scene.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(
+          BABYLON.ActionManager.OnKeyDownTrigger,
+          (evt) => {
+            switch (evt.sourceEvent.key) {
+              case 'w':
+                this.moveForward();
+                break;
+              case 'a':
+                this.moveLeft();
+                break;
+              case 's':
+                this.moveBackward();
+                break;
+              case 'd':
+                this.moveRight();
+                break;
+            }
+          }
+        )
+      );
+    }
+  
+    moveForward() {
+      this.mesh.position.z -= this.speed;
+    }
+  
+    moveBackward() {
+      this.mesh.position.z += this.speed;
+    }
+  
+    moveLeft() {
+      this.mesh.position.x -= this.speed;
+    }
+  
+    moveRight() {
+      this.mesh.position.x += this.speed;
+    }
+  
+    updatePosition(position) {
+      this.mesh.position = position;
+    }
+  }
+  

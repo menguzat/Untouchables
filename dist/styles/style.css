@@ -109,3 +109,6 @@ font-display:auto;font-style:normal;font-weight:700;font-stretch:normal;
     transform: translate(-50%, -50%);
 }
 /*  */
+
+/* debug */
+#debug {width: 100px; height: 40px; position: absolute; top: 0; right: 0; background-color: black; color: white; opacity: 0.5; overflow-y:auto;}
