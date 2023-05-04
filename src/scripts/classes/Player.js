@@ -429,9 +429,14 @@ export class Player {
       return mesh;
     }
 
-    function createChassisMesh(w, l, h) {
+    function createChassisMesh(w, l, h, color) {
       var mesh = new BABYLON.MeshBuilder.CreateBox("box", { width: w, depth: h, height: l });
       mesh.rotationQuaternion = new BABYLON.Quaternion();
+    
+      var chassisMaterial = new BABYLON.StandardMaterial("chassisMaterial");
+      chassisMaterial.diffuseColor = color;
+      mesh.material = chassisMaterial;
+    
       return mesh;
     }
 
@@ -486,6 +491,9 @@ export class Player {
     var wheelDirectionCS0 = new Ammo.btVector3(0, -1, 0);
     var wheelAxleCS = new Ammo.btVector3(-1, 0, 0);
 
+    var localPlayerColor = new BABYLON.Color3(1, 1, 0); // Yellow
+    var otherPlayerColor = new BABYLON.Color3(1, 0, 0); // Red
+
     var geometry = new Ammo.btBoxShape(new Ammo.btVector3(chassisWidth * 1, chassisHeight * 1, chassisLength * 0.75));
     var transform = new Ammo.btTransform();
     transform.setIdentity();
@@ -495,7 +503,7 @@ export class Player {
     var localInertia = new Ammo.btVector3(0, 0, 0);
     geometry.calculateLocalInertia(massVehicle, localInertia);
 
-    chassisMesh = createChassisMesh(chassisWidth * 1.5, chassisHeight * 1.5, chassisLength * 1.5);
+    chassisMesh = createChassisMesh(chassisWidth * 1.5, chassisHeight * 1.5, chassisLength * 1.5, this.isLocal ? localPlayerColor : otherPlayerColor);
 
     var massOffset = new Ammo.btVector3(0, 0.4, 0);
     var transform2 = new Ammo.btTransform();
