@@ -13,6 +13,7 @@ export class PhotonManager {
         this.photon.onActorLeave = this.onActorLeave.bind(this);
         this.photon.onRoomList = this.onRoomList.bind(this);
         this.playerPositions = new Map();
+        this.players = new Map();
 
     }
     connect() {
@@ -71,11 +72,11 @@ export class PhotonManager {
 
         }
         if (code == 3) {
-            const { idA, idB, positionA, positionB, linearVelocityA, linearVelocityB, players } = data;
+            const { idA, idB, positionA, positionB, linearVelocityA, linearVelocityB } = data;
         //     console.log("collision event received");
-        //    console.log(players);
-            const playerA = players.get(idA.toString());
-            const playerB = players.get(idB.toString());
+        //    console.log( this.players);
+            const playerA = this.players.get(idA.toString());
+            const playerB =  this.players.get(idB.toString());
         
             if (playerA && playerB) {
               // Update positions and linear velocities for both players
