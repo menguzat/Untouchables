@@ -32,8 +32,8 @@ export class PhotonManager {
         }
     }
 
-    sendPlayerPositionUpdate(id, position, rotation) {
-        this.photon.raiseEvent(1, { id: id, position: position, rotation: rotation }, { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.Others });
+    sendPlayerPositionUpdate(id, position, rotation, linearVelocity, angularVelocity) {
+        this.photon.raiseEvent(1, { id: id, position: position, rotation: rotation, linearVelocity: linearVelocity, angularVelocity:angularVelocity }, { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.Others });
         this.photon.myRoom().setCustomProperties({ ["pos-" + id.toString()]: position, ["rot-" + id.toString()]: rotation }, { webForward: true });
     }
     setOnPlayerPositionUpdate(callback) {
@@ -68,7 +68,7 @@ export class PhotonManager {
 
 
             //this.playerPositions.set(id, position, rotation);
-            this.onPlayerPositionUpdate(id,  position, rotation, linearVelocity);
+            this.onPlayerPositionUpdate(id,  position, rotation, linearVelocity,angularVelocity);
 
         }
        

@@ -150,7 +150,7 @@ setInterval(() => {
     const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation: rotation };
 
     //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
-    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation, localPlayer.body.getLinearVelocity());
+    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation, localPlayer.body.getLinearVelocity(),localPlayer.body.getLinearVelocity());
     // photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
@@ -166,7 +166,7 @@ engine.runRenderLoop(() => {
   scene.render();
 });
 
-photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity) => {
+photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity,angularVelocity) => {
 
   if (id.toString() == photonManager.photon.myActor().actorNr.toString()) return;
 
@@ -209,6 +209,8 @@ photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity)
 
       interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
       otherPlayer.body.setLinearVelocity(linearVelocity);
+      otherPlayer.body.setAngularVelocity(angularVelocity);
+      otherPlayer.body.activate();
   }
 });
 
