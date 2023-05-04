@@ -64,9 +64,10 @@ export class PhotonManager {
         // Handle Photon events here
     if (code == 1) { // Add this
             
-            const { id, position, rotation, linearVelocity  } = data;
+        if(id== photon.myActor().actorNr.toString()) return;
+            const { id, position, rotation, linearVelocity, angularVelocity  } = data;
 
-
+            //console.log(angularVelocity);
             //this.playerPositions.set(id, position, rotation);
             this.onPlayerPositionUpdate(id,  position, rotation, linearVelocity,angularVelocity);
 
