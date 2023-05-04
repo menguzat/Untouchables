@@ -60,8 +60,11 @@ const players = new Map();
 const photonManager = new PhotonManager();
 
 photonManager.setOnJoinedRoom(() => {
+  const randomX = Math.random() * (groundRadius * 2) - groundRadius;
+  const randomZ = Math.random() * (groundRadius * 2) - groundRadius;
+
   // Add the local player
-  localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(0, 0, 0));
+  localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(randomX, 0, randomZ));
   players.set(photonManager.photon.myActor().actorNr.toString(), localPlayer);
 
   const otherActors = photonManager.photon.myRoomActors();
