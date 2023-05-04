@@ -753,13 +753,20 @@ export class Player {
   }
 
   destroy() {
+    if (this.body) {
+      const physicsEngine = this.scene.getPhysicsEngine();
+      const physicsWorld = physicsEngine.getPhysicsPlugin().world;
+      physicsWorld.removeRigidBody(this.body);
+      this.body = null;
+    }
+    if (this.vehicle) {
+      this.scene.getPhysicsEngine().removeAction(this.vehicle);
+      this.vehicle = null;
+    }
     if (this.mesh) {
-      this.wheelMeshes.forEach((wheelMesh) => {wheelMesh.dispose()});
+      this.wheelMeshes.forEach((wheelMesh) => { wheelMesh.dispose() });
       this.mesh.dispose();
-      
-      if(this.isLocal)
-        this.scene.getPhysicsEngine().removeAction(this.vehicle);
-      
+      this.mesh = null;
       console.log(`Player ${this.id} destroyed`);
     } else {
       console.warn(`Attempted to destroy player ${this.id} but mesh is not initialized`);

@@ -130,7 +130,7 @@ photonManager.setOnActorLeave((actor) => {
   console.log(playerToRemove)
   if (playerToRemove) {
     playerToRemove.destroy();
-    players.delete(actor);
+    players.delete(actor.actorNr.toString());
   }
 });
 photonManager.connect();
