@@ -33,10 +33,22 @@ export class Player {
       ammoTransform.setOrigin(ammoPosition);
       ammoTransform.setRotation(ammoRotation);
       this.body.setWorldTransform(ammoTransform);
+      this.body.setMotionState(new Ammo.btDefaultMotionState(ammoTransform));
+
     //   this.mesh.position.copyFrom(position);
     // this.mesh.rotationQuaternion.copyFrom(rotation);
     } else {
       console.warn(`Attempted to update physics body for player ${this.id} but body is not initialized`);
+    }
+  }
+  updatePhysicsBodyRotation(rotation) {
+    if (this.body) {
+      const ammoRotation = new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+      const ammoTransform = this.body.getCenterOfMassTransform();
+      ammoTransform.setRotation(ammoRotation);
+      this.body.setCenterOfMassTransform(ammoTransform);
+    } else {
+      console.warn(`Attempted to update physics body rotation for player ${this.id} but body is not initialized`);
     }
   }
   init() {
@@ -58,7 +70,7 @@ export class Player {
       this.setupControls();
     }
     else {
-     // this.mesh.physicsImpostor.setMass(0);
+     // this.mesh.physicsImpostor.setMass(400);
 
     }
     var box = new BABYLON.MeshBuilder.CreateBox("box", {width:1, depth:1, height:1}, this.scene);
