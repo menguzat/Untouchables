@@ -169,7 +169,7 @@ engine.runRenderLoop(() => {
 photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity,angularVelocity) => {
 
   if (id.toString() == photonManager.photon.myActor().actorNr.toString()) return;
-
+  console.log(id.toString());
   photonManager.playerPositions.set(id.toString(), { position: position, rotation: rotation, timestamp: Date.now() });
 
   const otherPlayer = players.get(id.toString());
