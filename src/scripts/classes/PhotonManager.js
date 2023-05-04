@@ -66,7 +66,7 @@ export class PhotonManager {
             const { id, position, rotation  } = data;
 
 
-            this.playerPositions.set(id, position, rotation);
+            //this.playerPositions.set(id, position, rotation);
             this.onPlayerPositionUpdate(id,  position, rotation);
 
         }
