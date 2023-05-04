@@ -166,7 +166,7 @@ engine.runRenderLoop(() => {
   scene.render();
 });
 
-photonManager.setOnPlayerPositionUpdate((id, position, rotation) => {
+photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity) => {
 
   if (id.toString() == photonManager.photon.myActor().actorNr.toString()) return;
 
@@ -208,7 +208,7 @@ photonManager.setOnPlayerPositionUpdate((id, position, rotation) => {
       const interpolationTime = 100; // Adjust this value to control the interpolation speed
 
       interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
-    
+      otherPlayer.body.setLinearVelocity(linearVelocity);
   }
 });
 
