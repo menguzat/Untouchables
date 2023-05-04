@@ -14,6 +14,7 @@ export class PhotonManager {
         this.photon.onRoomList = this.onRoomList.bind(this);
         this.playerPositions = new Map();
         this.players = new Map();
+        this.localPlayerId=0;
 
     }
     connect() {
@@ -34,9 +35,10 @@ export class PhotonManager {
 
     sendPlayerPositionUpdate(id, position, rotation, linearVelocity, angularVelocity) {
         this.photon.raiseEvent(1, { id: id, position: position, rotation: rotation, linearVelocity: linearVelocity, angularVelocity:angularVelocity }, { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.Others });
-      //  this.photon.myRoom().setCustomProperties({ ["pos-" + id.toString()]: position, ["rot-" + id.toString()]: rotation }, { webForward: true });
+        this.photon.myRoom().setCustomProperties({ ["pos-" + id.toString()]: position, ["rot-" + id.toString()]: rotation }, { webForward: true });
     }
     setOnPlayerPositionUpdate(callback) {
+
         this.onPlayerPositionUpdate = callback;
     }
     setOnJoinedRoom(callback) {
@@ -65,11 +67,10 @@ export class PhotonManager {
     if (code == 1) { // Add this
             
             const { id, position, rotation, linearVelocity, angularVelocity  } = data;
-            if(id== this.photon.myActor().actorNr.toString()) return;
-
-            //console.log(angularVelocity);
-            //this.playerPositions.set(id, position, rotation);
-            this.onPlayerPositionUpdate(id,  position, rotation, linearVelocity,angularVelocity);
+            if(id.toString() !== this.photon.myActor().actorNr.toString()) {
+                // Update the position only for remote players
+                this.onPlayerPositionUpdate(id,  position, rotation, linearVelocity,angularVelocity);
+            }
 
         }
        
@@ -89,10 +90,10 @@ export class PhotonManager {
     onRoomList(rooms) {
         console.log(rooms);
         this.roomList = rooms;
-        this.joinOrCreateRoom("test23");
+        this.joinOrCreateRoom("test232");
     }
     getPing() {
-        this.photon.updateRtt("test23");
+        this.photon.updateRtt("test232");
         return this.photon.getRtt();
     }
 }

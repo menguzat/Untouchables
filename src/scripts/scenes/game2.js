@@ -61,15 +61,18 @@ const photonManager = new PhotonManager();
 
 photonManager.setOnJoinedRoom(() => {
   // Add the local player
-  localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(0, 0, 0));
-  players.set(photonManager.photon.myActor().actorNr.toString(), localPlayer);
+const randomX = Math.random() * (groundRadius * 2) - groundRadius;
+  const randomZ = Math.random() * (groundRadius * 2) - groundRadius;
+  // Add the local player
+  localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(randomX, 0, randomZ));  players.set(photonManager.photon.myActor().actorNr.toString(), localPlayer);
+  photonManager.localPlayerId = localPlayer.id;
 
   const otherActors = photonManager.photon.myRoomActors();
-  console.log(otherActors);
+  if (localPlayer.id === photonManager.localPlayerId) {
 
   window.addEventListener('keydown', keydown);
   window.addEventListener('keyup', keyup);
-
+}
   console.log("my actor nr " + photonManager.photon.myActor().actorNr);
   for (var i = 1; i <= otherActors.length; i++) {
     console.log(otherActors[i].actorNr);
@@ -91,13 +94,13 @@ photonManager.setOnJoinedRoom(() => {
       players.set(actor.toString(), otherPlayer);
     }
   }
-  photonManager.players=players;
+  photonManager.players = players;
 });
 
 photonManager.setOnActorJoin((actor) => {
-
+  
   console.log("actor joined " + photonManager.photon.myActor().actorNr + " " + actor.actorNr);
-  if (photonManager.photon.myActor().actorNr === actor.actorNr) {
+  if (photonManager.photon.myActor().actorNr == actor.actorNr) {
     return;
   }
 
@@ -123,7 +126,8 @@ photonManager.setOnActorJoin((actor) => {
 
   const newPlayer = new Player(scene, actor.actorNr, false, newposition, newrotation);
   players.set(actor.actorNr.toString(), newPlayer);
-  photonManager.players=players;
+  
+  photonManager.players.set(actor.actorNr.toString(), newPlayer);
   console.log("new player joined" + actor);
 });
 
@@ -135,7 +139,7 @@ photonManager.setOnActorLeave((actor) => {
     playerToRemove.destroy();
     players.delete(actor.actorNr.toString());
   }
-  photonManager.players=players;
+  photonManager.players = players;
 });
 photonManager.connect();
 
@@ -147,15 +151,17 @@ setInterval(() => {
   if (localPlayer != null) {
     const position = localPlayer.mesh.position;
     const rotation = localPlayer.mesh.rotationQuaternion;
-    const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation: rotation };
 
-    //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
-    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation, localPlayer.body.getLinearVelocity(),localPlayer.body.getAngularVelocity());
+    if (localPlayer.id === photonManager.localPlayerId) {
+
+      //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
+      photonManager.sendPlayerPositionUpdate(localPlayer.id, position, rotation, localPlayer.body.getLinearVelocity(), localPlayer.body.getAngularVelocity());
+    }
     // photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
-  
-},20);
+
+}, 20);
 // Set up the main game loop
 engine.runRenderLoop(() => {
 
@@ -166,11 +172,10 @@ engine.runRenderLoop(() => {
   scene.render();
 });
 
-photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity,angularVelocity) => {
+photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity, angularVelocity) => {
+  //console.log("update "+id +" local "+photonManager.photon.myActor().actorNr.toString());
+ // if (localPlayer.id.toString() == id.toString()) return;
 
-  if (id.toString() == photonManager.photon.myActor().actorNr.toString()) return;
-
-  photonManager.playerPositions.set(id.toString(), { position: position, rotation: rotation, timestamp: Date.now() });
 
   const otherPlayer = players.get(id.toString());
 
@@ -184,7 +189,7 @@ photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity,
     return BABYLON.Quaternion.Slerp(start, end, t);
   };
 
-  const interpolatePlayer = (player, newPosition, newRotation, interpolationTime) => {
+  const interpolatePlayer = (player, newPosition, newRotation, interpolationTime, linearVelocity, angularVelocity) => {
     const currentTime = Date.now();
     const previousState = player.previousState;
     const targetState = { position: newPosition, rotation: newRotation, timestamp: currentTime };
@@ -195,21 +200,31 @@ photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity,
       const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
       const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
 
-      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation, linearVelocity,angularVelocity);
-    } else {
-      player.updatePhysicsBody(newPosition, newRotation, linearVelocity,angularVelocity);
-    }
+      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation, linearVelocity, angularVelocity);
+        // Update the previous state for the player
+        player.previousState.position = interpolatedPosition;
+        player.previousState.rotation = interpolatedRotation;
+        player.previousState.timestamp = currentTime;
+      } else {
+        player.updatePhysicsBody(newPosition, newRotation, linearVelocity, angularVelocity);
+    
+        // Set the previous state for the player
+        player.previousState = { position: newPosition.clone(), rotation: newRotation.clone(), timestamp: currentTime };
+      }
+    photonManager.playerPositions.set(id.toString(), { position: newPosition, rotation: newRotation, timestamp: Date.now() });
+
   };
   // Client-side prediction
   if (otherPlayer && !otherPlayer.isLocal) {
-    
-    
-      const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);
-      const newRotation = new BABYLON.Quaternion(rotation._x, rotation._y, rotation._z, rotation._w);
-      const interpolationTime = 100; // Adjust this value to control the interpolation speed
 
-      interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
-      
+
+
+    const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);
+    const newRotation = new BABYLON.Quaternion(rotation._x, rotation._y, rotation._z, rotation._w);
+    const interpolationTime = 100; // Adjust this value to control the interpolation speed
+
+    interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime, linearVelocity, angularVelocity);
+
   }
 });
 
@@ -226,24 +241,29 @@ var keysActions = {
 };
 
 function keydown(e) {
-  if(localPlayer.isLocal==false) return;
+  
   if (keysActions[e.code]) {
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       localPlayer.actions['boost'] = true;
     } else {
       localPlayer.actions[keysActions[e.code]] = true;
     }
+    localPlayer.updateActions(localPlayer.actions);
+
   }
 }
 
 function keyup(e) {
-  if(localPlayer.isLocal==false) return;
+  
+  console.log(localPlayer);
   if (keysActions[e.code]) {
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       localPlayer.actions['boost'] = false;
     } else {
       localPlayer.actions[keysActions[e.code]] = false;
     }
+    localPlayer.updateActions(localPlayer.actions);
+
   }
 }
 
