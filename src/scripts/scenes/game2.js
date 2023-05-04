@@ -154,6 +154,8 @@ setInterval(()=> {
     players.forEach((playerB, idB) => {
       if (idA !== idB && playerA.mesh.intersectsMesh(playerB.mesh)) {
         // When a collision occurs, raise a collision event
+        console.log("collision");
+        console.log(players);
         const collisionData = {
           idA: idA,
           idB: idB,
@@ -163,12 +165,12 @@ setInterval(()=> {
           linearVelocityB: playerB.body.getLinearVelocity(),
           players: players
         };
-
         photonManager.photon.raiseEvent(
-          2,
+          3,
           collisionData,
           { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.All }
         );
+      
       }
     });
   }, 20);

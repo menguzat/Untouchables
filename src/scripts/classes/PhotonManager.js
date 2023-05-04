@@ -61,7 +61,7 @@ export class PhotonManager {
     }
     onEvent(code, data) {
         // Handle Photon events here
-    if (code === 1) { // Add this
+    if (code == 1) { // Add this
             
             const { id, position, rotation  } = data;
 
@@ -70,8 +70,10 @@ export class PhotonManager {
             this.onPlayerPositionUpdate(id,  position, rotation);
 
         }
-        if (code === 2) {
+        if (code == 3) {
             const { idA, idB, positionA, positionB, linearVelocityA, linearVelocityB, players } = data;
+        //     console.log("collision event received");
+        //    console.log(players);
             const playerA = players.get(idA.toString());
             const playerB = players.get(idB.toString());
         
