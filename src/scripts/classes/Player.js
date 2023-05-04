@@ -24,7 +24,7 @@ export class Player {
     this.wheelMeshes = [];
     this.init();
   }
-  updatePhysicsBody(position, rotation) {
+  updatePhysicsBody(position, rotation, linearVelocity, angularVelocity) {
     if (this.body) {
       const ammoPosition = new Ammo.btVector3(position._x, position._y, position._z);
       const ammoRotation = new Ammo.btQuaternion(rotation._x, rotation._y, rotation._z, rotation._w);
@@ -34,7 +34,9 @@ export class Player {
       ammoTransform.setRotation(ammoRotation);
       this.body.setWorldTransform(ammoTransform);
       this.body.setMotionState(new Ammo.btDefaultMotionState(ammoTransform));
-
+      this.body.setLinearVelocity(linearVelocity);
+      this.body.setAngularVelocity(angularVelocity);
+      this.body.activate();
     //   this.mesh.position.copyFrom(position);
     // this.mesh.rotationQuaternion.copyFrom(rotation);
     } else {

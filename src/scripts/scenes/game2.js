@@ -150,7 +150,7 @@ setInterval(() => {
     const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation: rotation };
 
     //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
-    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation, localPlayer.body.getLinearVelocity(),localPlayer.body.getLinearVelocity());
+    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation, localPlayer.body.getLinearVelocity(),localPlayer.body.getAngularVelocity());
     // photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
@@ -169,7 +169,7 @@ engine.runRenderLoop(() => {
 photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity,angularVelocity) => {
 
   if (id.toString() == photonManager.photon.myActor().actorNr.toString()) return;
-  console.log(id.toString());
+
   photonManager.playerPositions.set(id.toString(), { position: position, rotation: rotation, timestamp: Date.now() });
 
   const otherPlayer = players.get(id.toString());
@@ -195,22 +195,21 @@ photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity,
       const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
       const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
 
-      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation);
+      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation, linearVelocity,angularVelocity);
     } else {
-      player.updatePhysicsBody(newPosition, newRotation);
+      player.updatePhysicsBody(newPosition, newRotation, linearVelocity,angularVelocity);
     }
   };
   // Client-side prediction
-  if (otherPlayer) {
+  if (otherPlayer && !otherPlayer.isLocal) {
+    
     
       const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);
       const newRotation = new BABYLON.Quaternion(rotation._x, rotation._y, rotation._z, rotation._w);
       const interpolationTime = 100; // Adjust this value to control the interpolation speed
 
       interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
-      otherPlayer.body.setLinearVelocity(linearVelocity);
-      otherPlayer.body.setAngularVelocity(angularVelocity);
-      otherPlayer.body.activate();
+      
   }
 });
 
@@ -227,6 +226,7 @@ var keysActions = {
 };
 
 function keydown(e) {
+  if(localPlayer.isLocal==false) return;
   if (keysActions[e.code]) {
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       localPlayer.actions['boost'] = true;
@@ -237,6 +237,7 @@ function keydown(e) {
 }
 
 function keyup(e) {
+  if(localPlayer.isLocal==false) return;
   if (keysActions[e.code]) {
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       localPlayer.actions['boost'] = false;
