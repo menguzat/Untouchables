@@ -24,19 +24,22 @@ export class Player {
     this.wheelMeshes = [];
     this.init();
   }
+  updateActions(actions) {
+    this.actions = actions;
+  }
   updatePhysicsBody(position, rotation, linearVelocity, angularVelocity) {
-    if (this.body) {
+    if (this.body && !this.isLocal) {
       const ammoPosition = new Ammo.btVector3(position._x, position._y, position._z);
       const ammoRotation = new Ammo.btQuaternion(rotation._x, rotation._y, rotation._z, rotation._w);
       const ammoTransform = new Ammo.btTransform();
-      ammoTransform.setIdentity();
+      ammoTransform.setIdentity();  
       ammoTransform.setOrigin(ammoPosition);
       ammoTransform.setRotation(ammoRotation);
-      this.body.setWorldTransform(ammoTransform);
-      this.body.setMotionState(new Ammo.btDefaultMotionState(ammoTransform));
-      this.body.setLinearVelocity(linearVelocity);
-      this.body.setAngularVelocity(angularVelocity);
-      this.body.activate();
+         this.body.setWorldTransform(ammoTransform);
+        this.body.setMotionState(new Ammo.btDefaultMotionState(ammoTransform));
+         this.body.setLinearVelocity(linearVelocity);
+         this.body.setAngularVelocity(angularVelocity);
+         this.body.activate();
     //   this.mesh.position.copyFrom(position);
     // this.mesh.rotationQuaternion.copyFrom(rotation);
     } else {
@@ -87,6 +90,7 @@ export class Player {
   }
   
   createJoystick() {
+    if(!this.isLocal) return;
     const joystickContainer = document.createElement("div");
     joystickContainer.style.position = "absolute";
     joystickContainer.style.bottom = "0px";
@@ -157,6 +161,7 @@ export class Player {
   
 
   createButtons() {
+    if(!this.isLocal) return;
     // Create braking button
     const brakingButton = BABYLON.GUI.Button.CreateSimpleButton("brakingButton", "Brake");
     brakingButton.width = "250px";
@@ -544,7 +549,7 @@ export class Player {
     this.scene.registerBeforeRender(() => {
       // var dt = this.engine.getDeltaTime().toFixed() / 1000;,
 
-      if (vehicleReady) {
+      if (vehicleReady ) {
 
         var speed = vehicle.getCurrentSpeedKmHour();
         var maxSteerVal = 0.2;
