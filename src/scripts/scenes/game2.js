@@ -100,26 +100,26 @@ photonManager.setOnActorJoin((actor) => {
   }
 
 
-  const newposition= new BABYLON.Vector3(0, 0, 0);
-  const newrotation=new BABYLON.Quaternion();
+  const newposition = new BABYLON.Vector3(0, 0, 0);
+  const newrotation = new BABYLON.Quaternion();
 
-// Check if there is an existing player with the same actor number
-const existingPlayer = photonManager.playerPositions.get(actor.actorNr.toString());
-if (existingPlayer) {
-  newposition._x = existingPlayer.x;
-  newposition._y = existingPlayer.y;
-  newposition._z = existingPlayer.z;
+  // Check if there is an existing player with the same actor number
+  const existingPlayer = photonManager.playerPositions.get(actor.actorNr.toString());
+  if (existingPlayer) {
+    newposition._x = existingPlayer.x;
+    newposition._y = existingPlayer.y;
+    newposition._z = existingPlayer.z;
     newrotation._w = existingPlayer.w;
     newrotation._x = existingPlayer.x;
     newrotation._y = existingPlayer.y;
     newrotation._z = existingPlayer.z;
-}
+  }
 
 
-// Set the custom properties for the joining actor
-photonManager.photon.myRoom().setCustomProperties({ [`pos-${actor.actorNr}`]: newposition, [`rot-${actor.actorNr}`]: newrotation }, { webForward: true });
+  // Set the custom properties for the joining actor
+  photonManager.photon.myRoom().setCustomProperties({ [`pos-${actor.actorNr}`]: newposition, [`rot-${actor.actorNr}`]: newrotation }, { webForward: true });
 
-  const newPlayer = new Player(scene, actor.actorNr, false,newposition,newrotation);
+  const newPlayer = new Player(scene, actor.actorNr, false, newposition, newrotation);
   players.set(actor.actorNr.toString(), newPlayer);
   console.log("new player joined" + actor);
 });
@@ -138,8 +138,8 @@ photonManager.connect();
 setInterval(() => {
   ping = photonManager.getPing();
 }, 1000);
-
-setInterval(()=> {
+var collision = false;
+setInterval(() => {
   if (localPlayer != null) {
     const position = localPlayer.mesh.position;
     const rotation = localPlayer.mesh.rotationQuaternion;
@@ -147,12 +147,13 @@ setInterval(()=> {
 
     //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
     photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation);
-   // photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
+    // photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
   players.forEach((playerA, idA) => {
     players.forEach((playerB, idB) => {
       if (idA !== idB && playerA.mesh.intersectsMesh(playerB.mesh)) {
+        collision = true;
         // When a collision occurs, raise a collision event
         console.log("collision");
         console.log(players);
@@ -170,23 +171,26 @@ setInterval(()=> {
           collisionData,
           { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.All }
         );
-      
+
+      }
+      else {
+        collision = false;
       }
     });
   }, 20);
 })
 // Set up the main game loop
 engine.runRenderLoop(() => {
-  
+
   divFps.innerHTML = engine.getFps().toFixed() + " fps";
   divFps.innerHTML += "<br/>" + `${ping} ms`;
 
-  
+
   scene.render();
 });
 
-photonManager.setOnPlayerPositionUpdate((id,  position, rotation) => {
-  
+photonManager.setOnPlayerPositionUpdate((id, position, rotation) => {
+
   if (id.toString() == photonManager.photon.myActor().actorNr.toString()) return;
 
   photonManager.playerPositions.set(id.toString(), { position: position, rotation: rotation, timestamp: Date.now() });
@@ -221,11 +225,13 @@ photonManager.setOnPlayerPositionUpdate((id,  position, rotation) => {
   };
   // Client-side prediction
   if (otherPlayer) {
-    const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);
-    const newRotation = new BABYLON.Quaternion(rotation._x, rotation._y, rotation._z, rotation._w);
-    const interpolationTime = 100; // Adjust this value to control the interpolation speed
+    if (!collision) {
+      const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);
+      const newRotation = new BABYLON.Quaternion(rotation._x, rotation._y, rotation._z, rotation._w);
+      const interpolationTime = 100; // Adjust this value to control the interpolation speed
 
-    interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
+      interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
+    }
   }
 });
 
