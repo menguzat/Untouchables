@@ -186,16 +186,14 @@ photonManager.setOnPlayerPositionUpdate((id,  position, rotation) => {
       const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
       const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
   
-      const positionDelta = interpolatedPosition.subtract(player.mesh.position);
-      const linearVelocity = positionDelta.scale(1 / deltaTime);
+      const rotationDelta = interpolatedRotation.multiply(BABYLON.Quaternion.Inverse(player.mesh.rotationQuaternion));
+      const eulerRotationDelta = rotationDelta.toEulerAngles(); // Changed this line
+  
+      const linearVelocity = interpolatedPosition.subtract(player.mesh.position).scale(1 / deltaTime);
       const ammoLinearVelocity = new Ammo.btVector3(linearVelocity.x, linearVelocity.y, linearVelocity.z);
       player.body.setLinearVelocity(ammoLinearVelocity);
   
-      const rotationDelta = interpolatedRotation.multiply(BABYLON.Quaternion.Inverse(player.mesh.rotationQuaternion));
-      const axis = new BABYLON.Vector3();
-      let angle = 0;
-      rotationDelta.toAxisAngle(axis, angle);
-      const angularVelocity = axis.scale(angle / deltaTime);
+      const angularVelocity = eulerRotationDelta.scale(1 / deltaTime); // Changed this line
       const ammoAngularVelocity = new Ammo.btVector3(angularVelocity.x, angularVelocity.y, angularVelocity.z);
       player.body.setAngularVelocity(ammoAngularVelocity);
   
