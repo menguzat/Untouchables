@@ -71,7 +71,7 @@ export class PhotonManager {
 
         }
         if (code === 2) {
-            const { idA, idB, positionA, positionB, linearVelocityA, linearVelocityB } = data;
+            const { idA, idB, positionA, positionB, linearVelocityA, linearVelocityB, players } = data;
             const playerA = players.get(idA.toString());
             const playerB = players.get(idB.toString());
         

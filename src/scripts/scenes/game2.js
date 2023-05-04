@@ -160,7 +160,8 @@ setInterval(()=> {
           positionA: playerA.mesh.position,
           positionB: playerB.mesh.position,
           linearVelocityA: playerA.body.getLinearVelocity(),
-          linearVelocityB: playerB.body.getLinearVelocity()
+          linearVelocityB: playerB.body.getLinearVelocity(),
+          players: players
         };
 
         photonManager.photon.raiseEvent(
