@@ -179,27 +179,17 @@ photonManager.setOnPlayerPositionUpdate((id,  position, rotation) => {
     const currentTime = Date.now();
     const previousState = player.previousState;
     const targetState = { position: newPosition, rotation: newRotation, timestamp: currentTime };
-  
+
     if (previousState) {
       const deltaTime = currentTime - previousState.timestamp;
       const t = Math.min(deltaTime / interpolationTime, 1);
       const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
-      
-      // Calculate the velocity needed to reach the target position
-      const velocity = interpolatedPosition.subtract(previousState.position).scale(1 / deltaTime);
-      
-      // Apply the velocity to the physics body
-      const ammoVelocity = new Ammo.btVector3(velocity.x, velocity.y, velocity.z);
-      player.body.setLinearVelocity(ammoVelocity);
-  
       const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
-      player.updatePhysicsBodyRotation(interpolatedRotation);
+
+      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation);
     } else {
       player.updatePhysicsBody(newPosition, newRotation);
     }
-  
-    player.previousState = targetState;
-  };
 
   // Client-side prediction
   if (otherPlayer) {
