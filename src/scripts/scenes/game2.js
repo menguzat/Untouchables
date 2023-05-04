@@ -139,8 +139,7 @@ setInterval(() => {
   ping = photonManager.getPing();
 }, 1000);
 
-// Set up the main game loop
-engine.runRenderLoop(() => {
+setInterval(()=> {
   if (localPlayer != null) {
     const position = localPlayer.mesh.position;
     const rotation = localPlayer.mesh.rotationQuaternion;
@@ -151,9 +150,35 @@ engine.runRenderLoop(() => {
    // photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
+  players.forEach((playerA, idA) => {
+    players.forEach((playerB, idB) => {
+      if (idA !== idB && playerA.mesh.intersectsMesh(playerB.mesh)) {
+        // When a collision occurs, raise a collision event
+        const collisionData = {
+          idA: idA,
+          idB: idB,
+          positionA: playerA.mesh.position,
+          positionB: playerB.mesh.position,
+          linearVelocityA: playerA.body.getLinearVelocity(),
+          linearVelocityB: playerB.body.getLinearVelocity()
+        };
+
+        photonManager.photon.raiseEvent(
+          2,
+          collisionData,
+          { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.All }
+        );
+      }
+    });
+  }, 20);
+})
+// Set up the main game loop
+engine.runRenderLoop(() => {
+  
   divFps.innerHTML = engine.getFps().toFixed() + " fps";
   divFps.innerHTML += "<br/>" + `${ping} ms`;
 
+  
   scene.render();
 });
 
@@ -175,22 +200,33 @@ photonManager.setOnPlayerPositionUpdate((id,  position, rotation) => {
     return BABYLON.Quaternion.Slerp(start, end, t);
   };
 
-  const interpolatePlayer = (player, newPosition, newRotation, interpolationTime) => {
-    const currentTime = Date.now();
-    const previousState = player.previousState;
-    const targetState = { position: newPosition, rotation: newRotation, timestamp: currentTime };
+ const interpolatePlayer = (player, newPosition, newRotation, interpolationTime) => {
+  const currentTime = Date.now();
+  const previousState = player.previousState;
+  const targetState = { position: newPosition, rotation: newRotation, timestamp: currentTime };
 
-    if (previousState) {
-      const deltaTime = currentTime - previousState.timestamp;
-      const t = Math.min(deltaTime / interpolationTime, 1);
-      const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
-      const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
+  if (previousState) {
+    const deltaTime = currentTime - previousState.timestamp;
+    const t = Math.min(deltaTime / interpolationTime, 1);
+    const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
+    const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
 
-      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation);
-    } else {
-      player.updatePhysicsBody(newPosition, newRotation);
-    }
-  };
+    const positionDelta = interpolatedPosition.subtract(player.mesh.position);
+    const linearVelocity = positionDelta.scale(1 / deltaTime);
+    const ammoLinearVelocity = new Ammo.btVector3(linearVelocity.x, linearVelocity.y, linearVelocity.z);
+    player.body.setLinearVelocity(ammoLinearVelocity);
+
+    const rotationDelta = interpolatedRotation.subtract(player.mesh.rotationQuaternion.toEulerAngles());
+    const angularVelocity = rotationDelta.scale(1 / deltaTime);
+    const ammoAngularVelocity = new Ammo.btVector3(angularVelocity.x, angularVelocity.y, angularVelocity.z);
+    player.body.setAngularVelocity(ammoAngularVelocity);
+
+  } else {
+    player.updatePhysicsBody(newPosition, newRotation);
+  }
+
+  player.previousState = targetState;
+};
   // Client-side prediction
   if (otherPlayer) {
     const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);

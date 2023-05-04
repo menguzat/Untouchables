@@ -70,6 +70,25 @@ export class PhotonManager {
             this.onPlayerPositionUpdate(id,  position, rotation);
 
         }
+        if (code === 2) {
+            const { idA, idB, positionA, positionB, linearVelocityA, linearVelocityB } = data;
+            const playerA = players.get(idA.toString());
+            const playerB = players.get(idB.toString());
+        
+            if (playerA && playerB) {
+              // Update positions and linear velocities for both players
+              playerA.updatePhysicsBody(positionA, playerA.mesh.rotationQuaternion);
+              playerB.updatePhysicsBody(positionB, playerB.mesh.rotationQuaternion);
+        
+              const ammoLinearVelocityA = new Ammo.btVector3(
+                linearVelocityA._x, linearVelocityA._y, linearVelocityA._z);
+              const ammoLinearVelocityB = new Ammo.btVector3(
+                linearVelocityB._x, linearVelocityB._y, linearVelocityB._z);
+        
+              playerA.body.setLinearVelocity(ammoLinearVelocityA);
+              playerB.body.setLinearVelocity(ammoLinearVelocityB);
+            }
+          }        
     }
     onError(errorCode, errorMsg) {
         console.error(`Photon Error: ${errorCode} - ${errorMsg}`);
