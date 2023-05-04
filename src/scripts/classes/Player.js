@@ -486,7 +486,7 @@ export class Player {
     var wheelDirectionCS0 = new Ammo.btVector3(0, -1, 0);
     var wheelAxleCS = new Ammo.btVector3(-1, 0, 0);
 
-    var geometry = new Ammo.btBoxShape(new Ammo.btVector3(chassisWidth * 1, chassisHeight * 0.6, chassisLength * 0.75));
+    var geometry = new Ammo.btBoxShape(new Ammo.btVector3(chassisWidth * 1, chassisHeight * 1, chassisLength * 0.75));
     var transform = new Ammo.btTransform();
     transform.setIdentity();
     transform.setOrigin(new Ammo.btVector3(this.position.x, this.position.y, this.position.x));
