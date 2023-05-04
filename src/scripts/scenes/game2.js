@@ -179,29 +179,17 @@ photonManager.setOnPlayerPositionUpdate((id,  position, rotation) => {
     const currentTime = Date.now();
     const previousState = player.previousState;
     const targetState = { position: newPosition, rotation: newRotation, timestamp: currentTime };
-  
+
     if (previousState) {
       const deltaTime = currentTime - previousState.timestamp;
       const t = Math.min(deltaTime / interpolationTime, 1);
       const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
       const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
-  
-      const rotationDelta = interpolatedRotation.multiply(BABYLON.Quaternion.Inverse(player.mesh.rotationQuaternion));
-      const eulerRotationDelta = rotationDelta.toEulerAngles(); // Changed this line
-  
-      const linearVelocity = interpolatedPosition.subtract(player.mesh.position).scale(1 / deltaTime);
-      const ammoLinearVelocity = new Ammo.btVector3(linearVelocity.x, linearVelocity.y, linearVelocity.z);
-      player.body.setLinearVelocity(ammoLinearVelocity);
-  
-      const angularVelocity = eulerRotationDelta.scale(1 / deltaTime); // Changed this line
-      const ammoAngularVelocity = new Ammo.btVector3(angularVelocity.x, angularVelocity.y, angularVelocity.z);
-      player.body.setAngularVelocity(ammoAngularVelocity);
-  
+
+      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation);
     } else {
       player.updatePhysicsBody(newPosition, newRotation);
     }
-  
-    player.previousState = targetState;
   };
   // Client-side prediction
   if (otherPlayer) {
