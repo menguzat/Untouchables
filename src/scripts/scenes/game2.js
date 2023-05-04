@@ -58,6 +58,7 @@ const light = new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0, 1, 0)
 const players = new Map();
 
 const photonManager = new PhotonManager();
+
 photonManager.setOnJoinedRoom(() => {
   // Add the local player
   localPlayer = new Player(scene, photonManager.photon.myActor().actorNr, true, new BABYLON.Vector3(0, 0, 0));
@@ -90,6 +91,7 @@ photonManager.setOnJoinedRoom(() => {
       players.set(actor.toString(), otherPlayer);
     }
   }
+  photonManager.players=players;
 });
 
 photonManager.setOnActorJoin((actor) => {
@@ -121,6 +123,7 @@ photonManager.setOnActorJoin((actor) => {
 
   const newPlayer = new Player(scene, actor.actorNr, false, newposition, newrotation);
   players.set(actor.actorNr.toString(), newPlayer);
+  photonManager.players=players;
   console.log("new player joined" + actor);
 });
 
@@ -132,6 +135,7 @@ photonManager.setOnActorLeave((actor) => {
     playerToRemove.destroy();
     players.delete(actor.actorNr.toString());
   }
+  photonManager.players=players;
 });
 photonManager.connect();
 
@@ -156,7 +160,7 @@ setInterval(() => {
         collision = true;
         // When a collision occurs, raise a collision event
         console.log("collision");
-        console.log(players);
+        //console.log(players);
         const collisionData = {
           idA: idA,
           idB: idB,
@@ -164,7 +168,7 @@ setInterval(() => {
           positionB: playerB.mesh.position,
           linearVelocityA: playerA.body.getLinearVelocity(),
           linearVelocityB: playerB.body.getLinearVelocity(),
-          players: players
+
         };
         photonManager.photon.raiseEvent(
           3,
@@ -225,13 +229,13 @@ photonManager.setOnPlayerPositionUpdate((id, position, rotation) => {
   };
   // Client-side prediction
   if (otherPlayer) {
-    if (!collision) {
+    
       const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);
       const newRotation = new BABYLON.Quaternion(rotation._x, rotation._y, rotation._z, rotation._w);
       const interpolationTime = 100; // Adjust this value to control the interpolation speed
 
       interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime);
-    }
+    
   }
 });
 
