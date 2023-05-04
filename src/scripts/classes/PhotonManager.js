@@ -64,36 +64,14 @@ export class PhotonManager {
         // Handle Photon events here
     if (code == 1) { // Add this
             
-            const { id, position, rotation  } = data;
+            const { id, position, rotation, linearVelocity  } = data;
 
 
             //this.playerPositions.set(id, position, rotation);
-            this.onPlayerPositionUpdate(id,  position, rotation);
+            this.onPlayerPositionUpdate(id,  position, rotation, linearVelocity);
 
         }
-        if (code == 3) {
-            const { idA, idB, positionA, positionB, linearVelocityA, linearVelocityB } = data;
-        //     console.log("collision event received");
-        //    console.log( this.players);
-            const playerA = this.players.get(idA.toString());
-            const playerB =  this.players.get(idB.toString());
-        
-              if (playerA && playerB) {
-              // Update positions and linear velocities for both players
-            //   playerA.updatePhysicsBody(positionA, playerA.mesh.rotationQuaternion);
-            //   playerB.updatePhysicsBody(positionB, playerB.mesh.rotationQuaternion);
-        
-              const ammoLinearVelocityA = new Ammo.btVector3(
-                linearVelocityA._x, linearVelocityA._y, linearVelocityA._z);
-              const ammoLinearVelocityB = new Ammo.btVector3(
-                linearVelocityB._x, linearVelocityB._y, linearVelocityB._z);
-        
-              playerA.body.setLinearVelocity(ammoLinearVelocityA);
-              playerB.body.setLinearVelocity(ammoLinearVelocityB);
-              playerA.body.activate();
-              playerB.body.activate();
-            }
-          }        
+       
     }
     onError(errorCode, errorMsg) {
         console.error(`Photon Error: ${errorCode} - ${errorMsg}`);

@@ -150,39 +150,12 @@ setInterval(() => {
     const data = { id: photonManager.photon.myActor().actorNr, actions: localPlayer.actions, position: position, rotation: rotation };
 
     //photonManager.photon.myRoom().setCustomProperty("pos-" + photonManager.photon.myActor().actorNr.toString(), position);
-    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation);
+    photonManager.sendPlayerPositionUpdate(photonManager.photon.myActor().actorNr, position, rotation, localPlayer.body.getLinearVelocity());
     // photonManager.photon.raiseEvent(Photon.LoadBalancing.Constants.EventCode.UserCustom, data);
   }
 
-  players.forEach((playerA, idA) => {
-    players.forEach((playerB, idB) => {
-      if (idA !== idB && playerA.mesh.intersectsMesh(playerB.mesh)) {
-        collision = true;
-        // When a collision occurs, raise a collision event
-        console.log("collision");
-        //console.log(players);
-        const collisionData = {
-          idA: idA,
-          idB: idB,
-          positionA: playerA.mesh.position,
-          positionB: playerB.mesh.position,
-          linearVelocityA: playerA.body.getLinearVelocity(),
-          linearVelocityB: playerB.body.getLinearVelocity(),
-
-        };
-        photonManager.photon.raiseEvent(
-          3,
-          collisionData,
-          { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.All }
-        );
-
-      }
-      else {
-        collision = false;
-      }
-    });
-  }, 20);
-})
+  
+},20);
 // Set up the main game loop
 engine.runRenderLoop(() => {
 
