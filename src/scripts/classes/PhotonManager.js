@@ -89,6 +89,7 @@ export class PhotonManager {
         this.joinOrCreateRoom("test23");
     }
     getPing() {
+        this.photon.updateRtt("test23");
         return this.photon.getRtt();
     }
 }

@@ -61,7 +61,13 @@ export class Player {
      // this.mesh.physicsImpostor.setMass(0);
 
     }
-    
+    var box = new BABYLON.MeshBuilder.CreateBox("box", {width:1, depth:1, height:1}, this.scene);
+    box.position.set(1,1,1);
+    box.rotation.set(1,1,1);
+
+        box.position.y += 5;
+
+    box.physicsImpostor = new BABYLON.PhysicsImpostor(box, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 1, friction: 0.5, restitution: 0.7 }, this.scene);
     this.mesh.setOr
     return this.mesh;
   }
@@ -390,7 +396,7 @@ export class Player {
       wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
       wheelInfo.set_m_wheelsDampingCompression(suspensionCompression);
       wheelInfo.set_m_maxSuspensionForce(600000);
-      wheelInfo.set_m_frictionSlip(40);
+      wheelInfo.set_m_frictionSlip(20);
       wheelInfo.set_m_rollInfluence(rollInfluence);
 
       var wheelMaterial = new BABYLON.StandardMaterial("wheelMaterial");
@@ -445,7 +451,6 @@ export class Player {
     var suspensionCompression = 2;
     var suspensionRestLength = 0.6;
     var rollInfluence = -0.2;
-    
 
     var steeringIncrement = .01;
     var steeringClamp = 0.4;
@@ -699,6 +704,7 @@ export class Player {
         q = tm.getRotation();
         chassisMesh.position.set(p.x(), p.y(), p.z());
         chassisMesh.rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
+        
         //chassisMesh.rotate(BABYLON.Axis.X, Math.PI);
       }
       if (chassisMesh.position.y < -5) {

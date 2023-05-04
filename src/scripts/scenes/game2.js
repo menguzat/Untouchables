@@ -12,7 +12,8 @@ let ping = 0;
 
 await Ammo();
 
-scene.enablePhysics(new BABYLON.Vector3(0, -20, 0), new BABYLON.AmmoJSPlugin());
+scene.enablePhysics(new BABYLON.Vector3(0, -20, 0), new BABYLON.AmmoJSPlugin(true, Ammo));
+
 
 let localPlayer = null;
 scene.clearColor = new BABYLON.Color3(0.8, 0.8, 0.8);
