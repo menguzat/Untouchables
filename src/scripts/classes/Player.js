@@ -28,7 +28,8 @@ export class Player {
     this.wheelMeshes = [];
     this.gamebuttons = new Gamebuttons();
     this.joystick = new Joystick();
-    this.particles = new Particle(); 
+    this.particles = new Particle();
+    this.wheelTrail = null;
     this.init();
   }
   updateActions(actions) {
@@ -63,12 +64,32 @@ export class Player {
       console.warn(`Attempted to update physics body rotation for player ${this.id} but body is not initialized`);
     }
   }
+  
   init() {
     this.mesh = this.createVehicle(this.position, this.rotation);
     this.mesh.position = this.position;
     this.mesh.rotationQuaternion = this.rotation;
     this.positionUpdated = false;
     this.boostParticles = this.particles.createBoostParticles.call(this);
+
+    this.freezeEffect = this.particles.createFreezeEffectParticleSystem.call(this);
+    this.freezeEffect.stop();
+
+    this.wheelTrail = this.particles.createWheelTrail.call(this);
+    this.wheelTrail.stop();
+
+    this.wheelTrail2 = this.particles.createWheelTrail2.call(this);
+    this.wheelTrail2.stop();
+
+    this.dashTrail = this.particles.createDashTrail.call(this);
+    this.dashTrail.stop();
+
+    this.wheelSmokeTrail = this.particles.createWheelSmokeTrail.call(this);
+    this.wheelSmokeTrail.stop();
+
+    this.weightEffect = this.particles.createWeightEffectParticleSystem.call(this);
+    this.weightEffect.stop();
+
     console.log("player " + this.id + " created");
     if (this.isLocal) {
       if (/Mobi|Android/i.test(navigator.userAgent)) {
@@ -83,16 +104,13 @@ export class Player {
     }
     else {
      // this.mesh.physicsImpostor.setMass(400);
-
     }
     var box = new BABYLON.MeshBuilder.CreateBox("box", {width:1, depth:1, height:1}, this.scene);
     box.position.set(1,1,1);
     box.rotation.set(1,1,1);
-
-        box.position.y += 5;
-
+    box.position.y += 5;
     box.physicsImpostor = new BABYLON.PhysicsImpostor(box, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 1, friction: 0.5, restitution: 0.7 }, this.scene);
-    this.mesh.setOr
+
     return this.mesh;
   }
 
@@ -109,7 +127,6 @@ export class Player {
 
   createVehicle(pos, quat) {
     const addWheel = (isFront, pos, radius, width, index) => {
-
       var wheelInfo = vehicle.addWheel(
         pos,
         wheelDirectionCS0,
@@ -130,7 +147,7 @@ export class Player {
 
       var wheelMaterial = new BABYLON.StandardMaterial("wheelMaterial");
       wheelMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-    
+      
       this.wheelMeshes[index] = createWheelMesh(radius, width);
       if (isFront) {
         var wheelMaterial = new BABYLON.StandardMaterial("wheelMaterial");
@@ -157,11 +174,8 @@ export class Player {
       return mesh;
     }
 
-    var vehicle, chassisMesh;
+    var vehicle, chassisMesh, wheelDirectionCS0, wheelAxleCS, vehicleReady = false;
     
-
-    var vehicleReady = false;
-
     var chassisWidth = 1.8;
     var chassisHeight = .6;
     var chassisLength = 4;
@@ -199,9 +213,6 @@ export class Player {
     var BACK_RIGHT = 3;
 
     var driftFriction = 40;
-
-    var wheelDirectionCS0;
-    var wheelAxleCS;
 
     var physicsWorld = this.scene.getPhysicsEngine().getPhysicsPlugin().world;
 
@@ -260,7 +271,6 @@ export class Player {
       // var dt = this.engine.getDeltaTime().toFixed() / 1000;,
 
       if (vehicleReady ) {
-
         var speed = vehicle.getCurrentSpeedKmHour();
         var maxSteerVal = 0.2;
         breakingForce = 0;
@@ -272,7 +282,6 @@ export class Player {
           } else {
             engineForce = maxEngineForce;
           }
-
         } else if (this.actions.braking) {
           if (speed > 1) {
             breakingForce = maxBreakingForce;
@@ -280,28 +289,29 @@ export class Player {
             engineForce = -maxEngineForce;
           }
         }
-
         if (this.actions.right) {
           if (vehicleSteering < steeringClamp) {
             vehicleSteering += steeringIncrement;
           }
-
         } else if (this.actions.left) {
           if (vehicleSteering > -steeringClamp) {
             vehicleSteering -= steeringIncrement;
           }
-
         } else {
           vehicleSteering = 0;
         }
-
         if (this.actions.drift) {
           driftFriction = 5;
           breakingForce += driftBreakingForce * 6;
+          this.wheelTrail.start();
+          this.wheelTrail2.start();
+          this.wheelSmokeTrail.start();
         } else {
           driftFriction = 40;
+          this.wheelTrail.stop();
+          this.wheelTrail2.stop();
+          this.wheelSmokeTrail.stop();
         }
-
         if (this.actions.boost) {
           engineForce = maxEngineForce * 1.6;
           if (!this.boostParticles.isStarted()) {
@@ -332,6 +342,10 @@ export class Player {
           const angularVelocity = this.body.getAngularVelocity();
           angularVelocity.setValue(0, 0, 0);
           this.body.setAngularVelocity(angularVelocity);
+
+          if (!this.freezeEffect.isStarted()) {
+            this.freezeEffect.start();
+          }
         
           // Set a timer to release the brakes and restore the car's control after 2 seconds
           setTimeout(() => {
@@ -339,6 +353,10 @@ export class Player {
             vehicle.setBrake(0, FRONT_RIGHT);
             vehicle.setBrake(0, BACK_LEFT);
             vehicle.setBrake(0, BACK_RIGHT);
+
+            if (this.freezeEffect.isStarted()) {
+              this.freezeEffect.stop();
+            }
         
             // Mark special as inactive
             this.specialActive = false;
@@ -364,6 +382,8 @@ export class Player {
           const angularVelocity = this.body.getAngularVelocity();
           angularVelocity.setValue(0, 0, 0);
           this.body.setAngularVelocity(angularVelocity);
+
+          this.weightEffect.start();
         
           // Set a timer to reset the mass after 2 seconds
           setTimeout(() => {
@@ -376,7 +396,7 @@ export class Player {
               vehicle.setBrake(0, FRONT_RIGHT);
               vehicle.setBrake(0, BACK_LEFT);
               vehicle.setBrake(0, BACK_RIGHT);
-          
+              this.weightEffect.stop();
               // Mark special2 as inactive
               this.special2Active = false;
             }, 200);
@@ -398,14 +418,16 @@ export class Player {
           // Apply the dash force to the vehicle
           const impulse = new Ammo.btVector3(movementDirection.x() * dashForce, 0, movementDirection.z() * dashForce);
           this.body.applyCentralImpulse(impulse);
+
+          this.dashTrail.start();
       
           // Set a timer to mark special3 as inactive after a short delay
           setTimeout(() => {
             this.special3Active = false;
             const stopImpulse = new Ammo.btVector3(0, 0, 0);
             this.body.setLinearVelocity(stopImpulse);
+            this.dashTrail.stop();
           }, 200);
-
         }
         
         vehicle.getWheelInfo(BACK_LEFT).set_m_frictionSlip(driftFriction / 1.1);
@@ -441,14 +463,12 @@ export class Player {
         q = tm.getRotation();
         chassisMesh.position.set(p.x(), p.y(), p.z());
         chassisMesh.rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
-        
         //chassisMesh.rotate(BABYLON.Axis.X, Math.PI);
       }
       if (chassisMesh.position.y < -5) {
         this.respawn();
       }
     });
-
     
     return chassisMesh  ;
   }
