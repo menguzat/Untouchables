@@ -161,7 +161,7 @@ setInterval(() => {
   }
 
 
-}, 20);
+}, 10);
 // Set up the main game loop
 engine.runRenderLoop(() => {
 
@@ -172,27 +172,26 @@ engine.runRenderLoop(() => {
   scene.render();
 });
 
+
+
+
 photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity, angularVelocity) => {
-  //console.log("update "+id +" local "+photonManager.photon.myActor().actorNr.toString());
- // if (localPlayer.id.toString() == id.toString()) return;
-
-
   const otherPlayer = players.get(id.toString());
 
-  // Interpolation
-  const interpolate = (start, end, t) => {
-    var newstart = new BABYLON.Vector3(start._x, start._y, start._z);
-    return BABYLON.Vector3.Lerp(newstart, end, t);
-  };
-
-  const interpolateRotation = (start, end, t) => {
-    return BABYLON.Quaternion.Slerp(start, end, t);
-  };
+  function interpolate(vector1, vector2, t) {
+    return BABYLON.Vector3.Lerp(vector1, vector2, t);
+  }
+  
+  function interpolateRotation(quaternion1, quaternion2, t) {
+    return BABYLON.Quaternion.Slerp(quaternion1, quaternion2, t);
+  }
 
   const interpolatePlayer = (player, newPosition, newRotation, interpolationTime, linearVelocity, angularVelocity) => {
     const currentTime = Date.now();
     const previousState = player.previousState;
     const targetState = { position: newPosition, rotation: newRotation, timestamp: currentTime };
+    const smoothingFactor = 0.1; // You can adjust this value to control the smoothing
+    
 
     if (previousState) {
       const deltaTime = currentTime - previousState.timestamp;
@@ -200,33 +199,46 @@ photonManager.setOnPlayerPositionUpdate((id, position, rotation, linearVelocity,
       const interpolatedPosition = interpolate(previousState.position, targetState.position, t);
       const interpolatedRotation = interpolateRotation(previousState.rotation, targetState.rotation, t);
 
-      player.updatePhysicsBody(interpolatedPosition, interpolatedRotation, linearVelocity, angularVelocity);
-        // Update the previous state for the player
-        player.previousState.position = interpolatedPosition;
-        player.previousState.rotation = interpolatedRotation;
-        player.previousState.timestamp = currentTime;
-      } else {
-        player.updatePhysicsBody(newPosition, newRotation, linearVelocity, angularVelocity);
-    
-        // Set the previous state for the player
-        player.previousState = { position: newPosition.clone(), rotation: newRotation.clone(), timestamp: currentTime };
-      }
-    photonManager.playerPositions.set(id.toString(), { position: newPosition, rotation: newRotation, timestamp: Date.now() });
+      // Apply smoothing to the interpolated position and rotation
+      const smoothedPosition = BABYLON.Vector3.Lerp(player.mesh.position, interpolatedPosition, smoothingFactor);
+      const smoothedRotation = BABYLON.Quaternion.Slerp(player.mesh.rotationQuaternion, interpolatedRotation, smoothingFactor);
 
+      player.updatePosition(smoothedPosition);
+      player.updatePhysicsBodyRotation(smoothedRotation);
+      player.updatePhysicsBody(smoothedPosition, smoothedRotation, linearVelocity, angularVelocity);
+
+      // Update the previous state for the player
+      player.previousState.position = interpolatedPosition.clone();
+      player.previousState.rotation = interpolatedRotation.clone();
+      player.previousState.timestamp = currentTime;
+    } else {
+      player.updatePosition(newPosition);
+      player.updatePhysicsBodyRotation(newRotation);
+      player.updatePhysicsBody(newPosition, newRotation, linearVelocity, angularVelocity);
+      // Set the previous state for the player
+      player.previousState = { position: newPosition.clone(), rotation: newRotation.clone(), timestamp: currentTime };
+    }
+
+    // Update the physics body position for other players
+    if (player !== localPlayer) {
+      player.updatePhysicsBody(newPosition, newRotation, linearVelocity, angularVelocity);
+    }
+
+    photonManager.playerPositions.set(player.id.toString(), { position: newPosition.clone(), rotation: newRotation.clone(), timestamp: Date.now() });
   };
-  // Client-side prediction
-  if (otherPlayer && !otherPlayer.isLocal) {
 
-
-
+  if (otherPlayer) {
     const newPosition = new BABYLON.Vector3(position._x, position._y, position._z);
     const newRotation = new BABYLON.Quaternion(rotation._x, rotation._y, rotation._z, rotation._w);
     const interpolationTime = 100; // Adjust this value to control the interpolation speed
-
     interpolatePlayer(otherPlayer, newPosition, newRotation, interpolationTime, linearVelocity, angularVelocity);
-
+  } else if (localPlayer) {
+    // Client-side prediction for the local player
+    localPlayer.updatePhysicsBody(position, rotation, linearVelocity, angularVelocity);
   }
 });
+
+
 
 var keysActions = {
   "KeyW": 'acceleration',

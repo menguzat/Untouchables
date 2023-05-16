@@ -15,7 +15,6 @@ export class PhotonManager {
         this.playerPositions = new Map();
         this.players = new Map();
         this.localPlayerId=0;
-
     }
     connect() {
         this.photon.connectToRegionMaster('eu');
@@ -32,13 +31,11 @@ export class PhotonManager {
             });
         }
     }
-
     sendPlayerPositionUpdate(id, position, rotation, linearVelocity, angularVelocity) {
         this.photon.raiseEvent(1, { id: id, position: position, rotation: rotation, linearVelocity: linearVelocity, angularVelocity:angularVelocity }, { receivers: Photon.LoadBalancing.Constants.ReceiverGroup.Others });
         this.photon.myRoom().setCustomProperties({ ["pos-" + id.toString()]: position, ["rot-" + id.toString()]: rotation }, { webForward: true });
     }
     setOnPlayerPositionUpdate(callback) {
-
         this.onPlayerPositionUpdate = callback;
     }
     setOnJoinedRoom(callback) {
@@ -63,18 +60,21 @@ export class PhotonManager {
         this.actorLeaveCallback = callback;
     }
     onEvent(code, data) {
-        // Handle Photon events here
-    if (code == 1) { // Add this
-            
-            const { id, position, rotation, linearVelocity, angularVelocity  } = data;
-            if(id.toString() !== this.photon.myActor().actorNr.toString()) {
-                // Update the position only for remote players
-                this.onPlayerPositionUpdate(id,  position, rotation, linearVelocity,angularVelocity);
+        if (code === 1) {
+          const { id, position, rotation, linearVelocity, angularVelocity } = data;
+          if (id.toString() !== this.photon.myActor().actorNr.toString()) {
+            // Update the position only for remote players
+            this.onPlayerPositionUpdate(id, position, rotation, linearVelocity, angularVelocity);
+          } else {
+            // Apply impulse force to the local player's vehicle when a collision occurs
+            const localPlayer = this.players.get(id.toString());
+            if (localPlayer) {
+              localPlayer.updatePhysicsBody(position, rotation, linearVelocity, angularVelocity, true);
             }
-
+          }
         }
-       
-    }
+      }
+      
     onError(errorCode, errorMsg) {
         console.error(`Photon Error: ${errorCode} - ${errorMsg}`);
     }
@@ -97,4 +97,3 @@ export class PhotonManager {
         return this.photon.getRtt();
     }
 }
-

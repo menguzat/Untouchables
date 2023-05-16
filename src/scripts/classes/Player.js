@@ -35,25 +35,34 @@ export class Player {
   updateActions(actions) {
     this.actions = actions;
   }
-  updatePhysicsBody(position, rotation, linearVelocity, angularVelocity) {
+  updatePhysicsBody(position, rotation, linearVelocity, angularVelocity, applyImpulse = false) {
     if (this.body && !this.isLocal) {
-      const ammoPosition = new Ammo.btVector3(position._x, position._y, position._z);
-      const ammoRotation = new Ammo.btQuaternion(rotation._x, rotation._y, rotation._z, rotation._w);
+      const ammoPosition = new Ammo.btVector3(position.x, position.y, position.z);
+      const ammoRotation = new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w);
       const ammoTransform = new Ammo.btTransform();
-      ammoTransform.setIdentity();  
+      ammoTransform.setIdentity();
       ammoTransform.setOrigin(ammoPosition);
       ammoTransform.setRotation(ammoRotation);
-         this.body.setWorldTransform(ammoTransform);
-        this.body.setMotionState(new Ammo.btDefaultMotionState(ammoTransform));
-         this.body.setLinearVelocity(linearVelocity);
-         this.body.setAngularVelocity(angularVelocity);
-         this.body.activate();
-    //   this.mesh.position.copyFrom(position);
-    // this.mesh.rotationQuaternion.copyFrom(rotation);
+      this.body.setWorldTransform(ammoTransform);
+      this.body.setMotionState(new Ammo.btDefaultMotionState(ammoTransform));
+      this.body.setLinearVelocity(linearVelocity);
+      this.body.setAngularVelocity(angularVelocity);
+      this.body.activate();
+      this.body.setCollisionFlags(2); // Set the CF_NO_CONTACT_RESPONSE flag to disable push response
+  
+      if (applyImpulse) {
+        const impulse = linearVelocity.clone().multiplyScalar(this.body.getMass() * 2); // Adjust the multiplier as needed
+        const ammoImpulse = new Ammo.btVector3(impulse.x, impulse.y, impulse.z);
+        this.body.applyCentralImpulse(ammoImpulse);
+      }
+      
     } else {
       console.warn(`Attempted to update physics body for player ${this.id} but body is not initialized`);
     }
   }
+  
+  
+  
   updatePhysicsBodyRotation(rotation) {
     if (this.body) {
       const ammoRotation = new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w);
@@ -141,9 +150,10 @@ export class Player {
       wheelInfo.set_m_suspensionStiffness(suspensionStiffness);
       wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
       wheelInfo.set_m_wheelsDampingCompression(suspensionCompression);
-      wheelInfo.set_m_maxSuspensionForce(600000);
-      wheelInfo.set_m_frictionSlip(20);
+      wheelInfo.set_m_maxSuspensionForce(200000);
+      wheelInfo.set_m_frictionSlip(10);
       wheelInfo.set_m_rollInfluence(rollInfluence);
+
 
       var wheelMaterial = new BABYLON.StandardMaterial("wheelMaterial");
       wheelMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
@@ -465,7 +475,7 @@ export class Player {
         chassisMesh.rotationQuaternion.set(q.x(), q.y(), q.z(), q.w());
         //chassisMesh.rotate(BABYLON.Axis.X, Math.PI);
       }
-      if (chassisMesh.position.y < -5) {
+      if (chassisMesh.position.y < -5 || chassisMesh.position.y > 20) {
         this.respawn();
       }
     });
