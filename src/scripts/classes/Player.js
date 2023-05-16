@@ -3,7 +3,7 @@ import { Joystick } from './ButtonsNDJoystick/Joystick.js';
 import { Particle } from './Particles/particles.js'
 
 export class Player {
-  constructor(scene, id, isLocal, position = new BABYLON.Vector3(0, 0, 0), rotation=new BABYLON.Quaternion()) {
+  constructor(scene, id, isLocal, position = new BABYLON.Vector3(0, 0, 0), rotation = new BABYLON.Quaternion()) {
     console.log(position);
     this.scene = scene;
     this.engine = scene.getEngine();
@@ -15,8 +15,8 @@ export class Player {
     this.ZERO_QUATERNION = new BABYLON.Quaternion();
     this.actions = { acceleration: false, braking: false, right: false, left: false, drift: false, boost: false, special: false, special2: false, special3: false };
     this.mesh = null;
-    this.positionUpdated=false;
-    this.previousState=null;
+    this.positionUpdated = false;
+    this.previousState = null;
     this.respawnPosition = position.clone();
     this.advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
     this.specialActive = false;
@@ -49,20 +49,42 @@ export class Player {
       this.body.setAngularVelocity(angularVelocity);
       this.body.activate();
       this.body.setCollisionFlags(2); // Set the CF_NO_CONTACT_RESPONSE flag to disable push response
-  
+
       if (applyImpulse) {
         const impulse = linearVelocity.clone().multiplyScalar(this.body.getMass() * 2); // Adjust the multiplier as needed
         const ammoImpulse = new Ammo.btVector3(impulse.x, impulse.y, impulse.z);
         this.body.applyCentralImpulse(ammoImpulse);
       }
-      
+
     } else {
       console.warn(`Attempted to update physics body for player ${this.id} but body is not initialized`);
     }
   }
-  
-  
-  
+  correctState(authoritativeState) {
+    this.state = authoritativeState;
+  }
+  handleCollision(otherPlayerId) {
+    const otherPlayer = this.players.get(otherPlayerId);
+    if (otherPlayer) {
+      // Calculate the new position and velocity after the collision
+      const newPosition = this.position.add(this.velocity);
+      const newVelocity = this.velocity.subtract(otherPlayer.velocity);
+      // Update the player's state
+      this.state.position = newPosition;
+      this.state.velocity = newVelocity;
+    }
+  }
+  predictCollision(otherPlayerId) {
+    const otherPlayer = this.players.get(otherPlayerId);
+    if (otherPlayer) {
+      // Predict the new position and velocity after the collision
+      const predictedPosition = this.position.add(this.velocity);
+      const predictedVelocity = this.velocity.subtract(otherPlayer.velocity);
+      // Update the player's state
+      this.state.position = predictedPosition;
+      this.state.velocity = predictedVelocity;
+    }
+  }
   updatePhysicsBodyRotation(rotation) {
     if (this.body) {
       const ammoRotation = new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w);
@@ -73,7 +95,23 @@ export class Player {
       console.warn(`Attempted to update physics body rotation for player ${this.id} but body is not initialized`);
     }
   }
-  
+
+  getState() {
+    return {
+      id: this.id,
+      position: this.position.clone(),
+      rotation: this.rotation.clone(),
+      actions: { ...this.actions },
+      speed: this.speed,
+      specialActive: this.specialActive,
+      special2Active: this.special2Active,
+      engineForceMultiplier: this.engineForceMultiplier,
+      lastSpecialTime: this.lastSpecialTime,
+      lastSpecial2Time: this.lastSpecial2Time,
+      lastSpecial3Time: this.lastSpecial3Time,
+    };
+  }
+
   init() {
     this.mesh = this.createVehicle(this.position, this.rotation);
     this.mesh.position = this.position;
@@ -112,11 +150,11 @@ export class Player {
       this.setupControls();
     }
     else {
-     // this.mesh.physicsImpostor.setMass(400);
+      // this.mesh.physicsImpostor.setMass(400);
     }
-    var box = new BABYLON.MeshBuilder.CreateBox("box", {width:1, depth:1, height:1}, this.scene);
-    box.position.set(1,1,1);
-    box.rotation.set(1,1,1);
+    var box = new BABYLON.MeshBuilder.CreateBox("box", { width: 1, depth: 1, height: 1 }, this.scene);
+    box.position.set(1, 1, 1);
+    box.rotation.set(1, 1, 1);
     box.position.y += 5;
     box.physicsImpostor = new BABYLON.PhysicsImpostor(box, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 1, friction: 0.5, restitution: 0.7 }, this.scene);
 
@@ -144,9 +182,9 @@ export class Player {
         radius,
         tuning,
         isFront);
-        if (!isFront) {
-          wheelInfo.set_m_frictionSlip(driftFriction);
-        }
+      if (!isFront) {
+        wheelInfo.set_m_frictionSlip(driftFriction);
+      }
       wheelInfo.set_m_suspensionStiffness(suspensionStiffness);
       wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
       wheelInfo.set_m_wheelsDampingCompression(suspensionCompression);
@@ -157,7 +195,7 @@ export class Player {
 
       var wheelMaterial = new BABYLON.StandardMaterial("wheelMaterial");
       wheelMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-      
+
       this.wheelMeshes[index] = createWheelMesh(radius, width);
       if (isFront) {
         var wheelMaterial = new BABYLON.StandardMaterial("wheelMaterial");
@@ -176,16 +214,16 @@ export class Player {
     function createChassisMesh(w, l, h, color) {
       var mesh = new BABYLON.MeshBuilder.CreateBox("box", { width: w, depth: h, height: l });
       mesh.rotationQuaternion = new BABYLON.Quaternion();
-    
+
       var chassisMaterial = new BABYLON.StandardMaterial("chassisMaterial");
       chassisMaterial.diffuseColor = color;
       mesh.material = chassisMaterial;
-    
+
       return mesh;
     }
 
     var vehicle, chassisMesh, wheelDirectionCS0, wheelAxleCS, vehicleReady = false;
-    
+
     var chassisWidth = 1.8;
     var chassisHeight = .6;
     var chassisLength = 4;
@@ -280,7 +318,7 @@ export class Player {
     this.scene.registerBeforeRender(() => {
       // var dt = this.engine.getDeltaTime().toFixed() / 1000;,
 
-      if (vehicleReady ) {
+      if (vehicleReady) {
         var speed = vehicle.getCurrentSpeedKmHour();
         var maxSteerVal = 0.2;
         breakingForce = 0;
@@ -333,7 +371,7 @@ export class Player {
           }
         }
 
-        if(this.actions.special && !this.specialActive) {
+        if (this.actions.special && !this.specialActive) {
           // Mark special as active
           this.specialActive = true;
           this.engineForceMultiplier = 0;
@@ -343,12 +381,12 @@ export class Player {
           vehicle.setBrake(10000, FRONT_RIGHT);
           vehicle.setBrake(10000, BACK_LEFT);
           vehicle.setBrake(10000, BACK_RIGHT);
-        
+
           // Set the car's linear and angular velocity to zero
           const linearVelocity = this.body.getLinearVelocity();
           linearVelocity.setValue(0, 0, 0);
           this.body.setLinearVelocity(linearVelocity);
-        
+
           const angularVelocity = this.body.getAngularVelocity();
           angularVelocity.setValue(0, 0, 0);
           this.body.setAngularVelocity(angularVelocity);
@@ -356,7 +394,7 @@ export class Player {
           if (!this.freezeEffect.isStarted()) {
             this.freezeEffect.start();
           }
-        
+
           // Set a timer to release the brakes and restore the car's control after 2 seconds
           setTimeout(() => {
             vehicle.setBrake(0, FRONT_LEFT);
@@ -367,39 +405,39 @@ export class Player {
             if (this.freezeEffect.isStarted()) {
               this.freezeEffect.stop();
             }
-        
+
             // Mark special as inactive
             this.specialActive = false;
             this.engineForceMultiplier = 1;
           }, 2000);
-        }        
+        }
 
-        if(this.actions.special2 && !this.special2Active) {
+        if (this.actions.special2 && !this.special2Active) {
           // Mark special2 as active
           this.special2Active = true;
-        
+
           // Increase the car's mass by a factor of 10
           const massFactor = 10;
           const originalMass = massVehicle;
           const increasedMass = originalMass * massFactor;
           this.body.setMassProps(increasedMass, localInertia);
-        
+
           // Set the car's linear and angular velocity to zero
           const linearVelocity = this.body.getLinearVelocity();
           linearVelocity.setValue(0, 0, 0);
           this.body.setLinearVelocity(linearVelocity);
-        
+
           const angularVelocity = this.body.getAngularVelocity();
           angularVelocity.setValue(0, 0, 0);
           this.body.setAngularVelocity(angularVelocity);
 
           this.weightEffect.start();
-        
+
           // Set a timer to reset the mass after 2 seconds
           setTimeout(() => {
             // Reset the car's mass to the original value
             this.body.setMassProps(originalMass, localInertia);
-          
+
             // Release the brakes after a short delay
             setTimeout(() => {
               vehicle.setBrake(0, FRONT_LEFT);
@@ -411,26 +449,26 @@ export class Player {
               this.special2Active = false;
             }, 200);
           }, 2000);
-          
+
         }
-        
+
         if (this.actions.special3 && !this.special3Active) {
           // Mark special3 as active
           this.special3Active = true;
-      
+
           // Calculate the current speed and movement direction
           const speed = vehicle.getCurrentSpeedKmHour() / 3.6;
           const movementDirection = vehicle.getForwardVector();
-      
+
           // Calculate the extra force for the quick dash
           const dashForce = 50000;
-      
+
           // Apply the dash force to the vehicle
           const impulse = new Ammo.btVector3(movementDirection.x() * dashForce, 0, movementDirection.z() * dashForce);
           this.body.applyCentralImpulse(impulse);
 
           this.dashTrail.start();
-      
+
           // Set a timer to mark special3 as inactive after a short delay
           setTimeout(() => {
             this.special3Active = false;
@@ -439,12 +477,12 @@ export class Player {
             this.dashTrail.stop();
           }, 200);
         }
-        
+
         vehicle.getWheelInfo(BACK_LEFT).set_m_frictionSlip(driftFriction / 1.1);
         vehicle.getWheelInfo(BACK_RIGHT).set_m_frictionSlip(driftFriction / 1.1);
         vehicle.getWheelInfo(FRONT_LEFT).set_m_frictionSlip(driftFriction);
         vehicle.getWheelInfo(FRONT_RIGHT).set_m_frictionSlip(driftFriction);
-        
+
         vehicle.applyEngineForce(engineForce * this.engineForceMultiplier, FRONT_LEFT);
         vehicle.applyEngineForce(engineForce * this.engineForceMultiplier, FRONT_RIGHT);
 
@@ -479,13 +517,13 @@ export class Player {
         this.respawn();
       }
     });
-    
-    return chassisMesh  ;
+
+    return chassisMesh;
   }
 
   setupControls() {
 
-  }  
+  }
 
   moveForward() {
     this.mesh.position.z -= this.speed;
